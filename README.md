@@ -2,15 +2,17 @@
 
 An Obsidian plugin that creates zettelkasten notes from Readwise footnotes while leaving the original highlights untouched.
 
+It's based on a [QuickAdd](https://github.com/chhoumann/quickadd) script created by [chhoumann](https://github.com/chhoumann) called the [zettelizer](https://quickadd.obsidian.guide/docs/Examples/Macro_Zettelizer).
+
 ## Features
 
-- **Interactive highlight selection**: Fuzzy search modal with multi-select support
-- **Block ID-based**: Works with Readwise highlights that have block IDs (`^blockid`)
-- **Smart search**: Search by highlight text or block ID
-- **Truncated display**: Configurable text truncation for long highlights
-- **Timestamp filenames**: Creates unique files using `YYYYMMDDHHmmssSSS` format
-- **Preserve original content**: Leaves your Readwise highlights file completely untouched
-- **Transclusion links**: Each zettel automatically links back to the original highlight using block references
+-   **Interactive highlight selection**: Fuzzy search modal with multi-select support
+-   **Block ID-based**: Works with Readwise highlights that have block IDs (`^blockid`)
+-   **Smart search**: Search by highlight text or block ID
+-   **Truncated display**: Configurable text truncation for long highlights
+-   **Timestamp filenames**: Creates unique files using `YYYYMMDDHHmmssSSS` format
+-   **Preserve original content**: Leaves your Readwise highlights file completely untouched
+-   **Transclusion links**: Each zettel automatically links back to the original highlight using block references
 
 ## How it works
 
@@ -23,25 +25,29 @@ An Obsidian plugin that creates zettelkasten notes from Readwise footnotes while
 ### Example
 
 **Original Readwise file:**
+
 ```markdown
-- This is an important insight about productivity ^abc123
-- Another key concept from the book ^def456
-- A third interesting highlight ^ghi789
+-   This is an important insight about productivity ^abc123
+-   Another key concept from the book ^def456
+-   A third interesting highlight ^ghi789
 ```
 
 **Using the modal:**
+
 1. Modal shows all three highlights with their block IDs
 2. You can search by text or ID (e.g., type "abc123" or "productivity")
 3. Press Space to select the first and third highlights
 4. Press Enter to create zettels
 
 **Created zettels:**
-- `20231119203045123.md` → Contains: `![[Readwise File#^abc123]]`
-- `20231119203045456.md` → Contains: `![[Readwise File#^ghi789]]`
+
+-   `20231119203045123.md` → Contains: `![[Readwise File#^abc123]]`
+-   `20231119203045456.md` → Contains: `![[Readwise File#^ghi789]]`
 
 ## Usage
 
 ### Command Palette
+
 1. Open a file with Readwise highlights (with block IDs)
 2. Press `Cmd/Ctrl + P` to open the command palette
 3. Search for "Zettelize Readwise Highlights"
@@ -50,24 +56,26 @@ An Obsidian plugin that creates zettelkasten notes from Readwise footnotes while
 ### Keyboard Shortcuts
 
 **In the fuzzy modal:**
-- **Arrow Up/Down**: Navigate through highlights
-- **Space**: Select/deselect current highlight
-- **Enter**: Confirm selection and create zettels
-- **Esc**: Cancel and close modal
-- **Type**: Search by highlight text or block ID
+
+-   **Arrow Up/Down**: Navigate through highlights
+-   **Space**: Select/deselect current highlight
+-   **Enter**: Confirm selection and create zettels
+-   **Esc**: Cancel and close modal
+-   **Type**: Search by highlight text or block ID
 
 ### Settings
 
 Access plugin settings via **Settings → Zettelizer**:
 
-- **Readwise Folder**: Folder containing Readwise highlights (default: `Readwise`)
-- **Zettel Folder**: Folder where zettel notes will be created (default: `Zettelkasten`)
-- **Truncate Length**: Maximum character length for display in modal (default: `100`)
-- **Timestamp Format**: Format for zettel filenames (default: `YYYYMMDDHHmmss`)
+-   **Readwise Folder**: Folder containing Readwise highlights (default: `Readwise`)
+-   **Zettel Folder**: Folder where zettel notes will be created (default: `Zettelkasten`)
+-   **Truncate Length**: Maximum character length for display in modal (default: `100`)
+-   **Timestamp Format**: Format for zettel filenames (default: `YYYYMMDDHHmmss`)
 
 ## Installation
 
 ### Development Installation
+
 1. Clone this repository into your vault's `.obsidian/plugins/zettelizer` folder
 2. Run `npm install` to install dependencies
 3. Run `npm run dev` for development with hot reload
@@ -77,11 +85,12 @@ Access plugin settings via **Settings → Zettelizer**:
 
 Built with TypeScript following Obsidian plugin best practices:
 
-- **Organized structure**: Modular code split into `commands/`, `utils/`, and core files
-- **Type safety**: Full TypeScript support with strict mode
-- **Minimal footprint**: Lightweight with no external dependencies
+-   **Organized structure**: Modular code split into `commands/`, `utils/`, and core files
+-   **Type safety**: Full TypeScript support with strict mode
+-   **Minimal footprint**: Lightweight with no external dependencies
 
 ### Project Structure
+
 ```
 src/
   main.ts                    # Plugin lifecycle and registration
