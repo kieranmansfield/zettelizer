@@ -1,94 +1,103 @@
-# Obsidian Sample Plugin
+# Zettelizer
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian plugin that creates zettelkasten notes from Readwise footnotes while leaving the original highlights untouched.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Interactive highlight selection**: Fuzzy search modal with multi-select support
+- **Block ID-based**: Works with Readwise highlights that have block IDs (`^blockid`)
+- **Smart search**: Search by highlight text or block ID
+- **Truncated display**: Configurable text truncation for long highlights
+- **Timestamp filenames**: Creates unique files using `YYYYMMDDHHmmssSSS` format
+- **Preserve original content**: Leaves your Readwise highlights file completely untouched
+- **Transclusion links**: Each zettel automatically links back to the original highlight using block references
 
-## First time developing plugins?
+## How it works
 
-Quick starting guide for new plugin devs:
+1. Open a file containing Readwise highlights with block IDs
+2. Run the command: **Zettelize Readwise Highlights**
+3. A fuzzy search modal appears showing all highlights with block IDs
+4. Use arrow keys to navigate, Space to select/deselect, Enter to confirm
+5. Selected highlights are converted to individual zettel notes
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+### Example
 
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint ./src/`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+**Original Readwise file:**
+```markdown
+- This is an important insight about productivity ^abc123
+- Another key concept from the book ^def456
+- A third interesting highlight ^ghi789
 ```
 
-If you have multiple URLs, you can also do:
+**Using the modal:**
+1. Modal shows all three highlights with their block IDs
+2. You can search by text or ID (e.g., type "abc123" or "productivity")
+3. Press Space to select the first and third highlights
+4. Press Enter to create zettels
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+**Created zettels:**
+- `20231119203045123.md` → Contains: `![[Readwise File#^abc123]]`
+- `20231119203045456.md` → Contains: `![[Readwise File#^ghi789]]`
+
+## Usage
+
+### Command Palette
+1. Open a file with Readwise highlights (with block IDs)
+2. Press `Cmd/Ctrl + P` to open the command palette
+3. Search for "Zettelize Readwise Highlights"
+4. Execute the command
+
+### Keyboard Shortcuts
+
+**In the fuzzy modal:**
+- **Arrow Up/Down**: Navigate through highlights
+- **Space**: Select/deselect current highlight
+- **Enter**: Confirm selection and create zettels
+- **Esc**: Cancel and close modal
+- **Type**: Search by highlight text or block ID
+
+### Settings
+
+Access plugin settings via **Settings → Zettelizer**:
+
+- **Readwise Folder**: Folder containing Readwise highlights (default: `Readwise`)
+- **Zettel Folder**: Folder where zettel notes will be created (default: `Zettelkasten`)
+- **Truncate Length**: Maximum character length for display in modal (default: `100`)
+- **Timestamp Format**: Format for zettel filenames (default: `YYYYMMDDHHmmss`)
+
+## Installation
+
+### Development Installation
+1. Clone this repository into your vault's `.obsidian/plugins/zettelizer` folder
+2. Run `npm install` to install dependencies
+3. Run `npm run dev` for development with hot reload
+4. Run `npm run build` for production build
+
+## Development
+
+Built with TypeScript following Obsidian plugin best practices:
+
+- **Organized structure**: Modular code split into `commands/`, `utils/`, and core files
+- **Type safety**: Full TypeScript support with strict mode
+- **Minimal footprint**: Lightweight with no external dependencies
+
+### Project Structure
+```
+src/
+  main.ts                    # Plugin lifecycle and registration
+  settings.ts                # Settings interface and defaults
+  types.ts                   # TypeScript interfaces
+  commands/
+    commands.ts              # Command registration orchestrator
+    zettelizeCommand.ts      # Main zettelization logic
+  ui/
+    FuzzyHighlightModal.ts   # Multi-select fuzzy modal
+    MultiSelectHighlightModal.ts  # Legacy modal (for reference)
+  utils/
+    parser.ts                # Block ID parsing utilities
+    timestamp.ts             # Timestamp generation
 ```
 
-## API Documentation
+## License
 
-See https://github.com/obsidianmd/obsidian-api
+MIT

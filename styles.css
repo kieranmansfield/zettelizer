@@ -1,8 +1,91 @@
-/*
+/* Zettelizer Modal Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.zettelizer-suggestion {
+	padding: 8px 12px;
+}
 
-If your plugin does not need CSS, delete this file.
+/* Checked items (selected with Space) - subtle background */
+.zettelizer-suggestion.is-checked {
+	background-color: var(--background-modifier-hover);
+}
 
-*/
+/* Focused/highlighted item (keyboard navigation) - accent color border */
+.suggestion-item.is-selected .zettelizer-main-line {
+	border-left: 3px solid var(--interactive-accent);
+	padding-left: 5px;
+}
+
+.zettelizer-suggestion-content {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.zettelizer-main-line {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.zettelizer-checkbox-container {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.zettelizer-checkbox-container .task-list-item-checkbox {
+	margin: 0;
+	cursor: pointer;
+	pointer-events: none; /* Prevent direct clicking */
+}
+
+/* Style checked checkboxes with accent color */
+.zettelizer-suggestion.is-checked .task-list-item-checkbox {
+	filter: hue-rotate(0deg) saturate(1.2);
+}
+
+.zettelizer-text {
+	flex: 1;
+	color: var(--text-normal);
+	word-wrap: break-word;
+}
+
+.zettelizer-block-id {
+	display: flex;
+	align-items: center;
+	padding-left: 28px;
+}
+
+.zettelizer-block-id-label {
+	font-size: 12px;
+	color: var(--text-muted);
+	font-family: var(--font-monospace);
+	font-weight: 500;
+}
+
+/* Multi-select list styles (for old modal, keeping for backwards compatibility) */
+.multi-select-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.multi-select-item {
+	padding: 8px 12px;
+	cursor: pointer;
+	border-radius: 4px;
+	margin-bottom: 4px;
+}
+
+.multi-select-item:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.multi-select-item.is-checked {
+	background-color: var(--background-modifier-hover);
+}
+
+.multi-select-item.is-active {
+	border-left: 3px solid var(--interactive-accent);
+	padding-left: 9px;
+}
