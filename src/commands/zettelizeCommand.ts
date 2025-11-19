@@ -2,10 +2,7 @@ import { FuzzySuggestModal, Notice, TFile } from "obsidian";
 import { FuzzyHighlightModal } from "../ui/FuzzyHighlightModal";
 import { parseHighlightsFromContent } from "../utils/parser";
 import { generateTimestamp } from "../utils/timestamp";
-import {
-	processTemplate,
-	createTemplateVariables,
-} from "../utils/template";
+import { processTemplate, createTemplateVariables } from "../utils/template";
 import { Highlight } from "../types";
 import ZettelizerPlugin from "../main";
 
