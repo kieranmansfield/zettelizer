@@ -1,35 +1,35 @@
-import { App, TAbstractFile, TFolder } from "obsidian";
-import { TextInputSuggest } from "./TextInputSuggest";
+import { App, TAbstractFile, TFolder } from 'obsidian'
+import { TextInputSuggest } from './TextInputSuggest'
 
 export class FolderSuggest extends TextInputSuggest<TFolder> {
-	constructor(public app: App, public inputEl: HTMLInputElement) {
-		super(app, inputEl);
+	constructor(
+		public app: App,
+		public inputEl: HTMLInputElement
+	) {
+		super(app, inputEl)
 	}
 
 	getSuggestions(inputStr: string): TFolder[] {
-		const abstractFiles = this.app.vault.getAllLoadedFiles();
-		const folders: TFolder[] = [];
-		const lowerCaseInputStr = inputStr.toLowerCase();
+		const abstractFiles = this.app.vault.getAllLoadedFiles()
+		const folders: TFolder[] = []
+		const lowerCaseInputStr = inputStr.toLowerCase()
 
 		abstractFiles.forEach((folder: TAbstractFile) => {
-			if (
-				folder instanceof TFolder &&
-				folder.path.toLowerCase().contains(lowerCaseInputStr)
-			) {
-				folders.push(folder);
+			if (folder instanceof TFolder && folder.path.toLowerCase().contains(lowerCaseInputStr)) {
+				folders.push(folder)
 			}
-		});
+		})
 
-		return folders;
+		return folders
 	}
 
 	renderSuggestion(folder: TFolder, el: HTMLElement): void {
-		el.setText(folder.path);
+		el.setText(folder.path)
 	}
 
 	selectSuggestion(folder: TFolder): void {
-		this.inputEl.value = folder.path;
-		this.inputEl.trigger("input");
-		this.close();
+		this.inputEl.value = folder.path
+		this.inputEl.trigger('input')
+		this.close()
 	}
 }

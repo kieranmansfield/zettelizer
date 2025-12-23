@@ -1,14 +1,24 @@
 import { App, ISuggestOwner, Scope } from "obsidian";
 
+interface ObsidianAppWithPrivate extends App {
+	dom: {
+		appContainerEl: HTMLElement;
+	};
+	keymap: {
+		pushScope(scope: Scope): void;
+		popScope(scope: Scope): void;
+	};
+}
+
 const wrapAround = (value: number, size: number): number => {
 	return ((value % size) + size) % size;
 };
 
 class Suggest<T> {
 	private owner: ISuggestOwner<T>;
-	private values: T[];
-	private suggestions: HTMLDivElement[];
-	private selectedItem: number;
+	private values: T[] = [];
+	private suggestions: HTMLDivElement[] = [];
+	private selectedItem: number = 0;
 	private containerEl: HTMLElement;
 
 	constructor(owner: ISuggestOwner<T>, containerEl: HTMLElement, scope: Scope) {
@@ -18,12 +28,12 @@ class Suggest<T> {
 		containerEl.on(
 			"click",
 			".suggestion-item",
-			this.onSuggestionClick.bind(this)
+			this.onSuggestionClick.bind(this) as (this: HTMLElement, ev: PointerEvent, delegateTarget: HTMLElement) => void
 		);
 		containerEl.on(
 			"mousemove",
 			".suggestion-item",
-			this.onSuggestionMouseover.bind(this)
+			this.onSuggestionMouseover.bind(this) as (this: HTMLElement, ev: MouseEvent, delegateTarget: HTMLElement) => void
 		);
 
 		scope.register([], "ArrowUp", (event) => {
@@ -139,14 +149,14 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
 
 		if (suggestions.length > 0) {
 			this.suggest.setSuggestions(suggestions);
-			this.open((<any>this.app).dom.appContainerEl, this.inputEl);
+			this.open((this.app as ObsidianAppWithPrivate).dom.appContainerEl, this.inputEl);
 		} else {
 			this.close();
 		}
 	}
 
 	open(container: HTMLElement, inputEl: HTMLElement): void {
-		(<any>this.app).keymap.pushScope(this.scope);
+		(this.app as ObsidianAppWithPrivate).keymap.pushScope(this.scope);
 
 		container.appendChild(this.suggestEl);
 
@@ -158,7 +168,7 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
 	}
 
 	close(): void {
-		(<any>this.app).keymap.popScope(this.scope);
+		(this.app as ObsidianAppWithPrivate).keymap.popScope(this.scope);
 
 		this.suggest.setSuggestions([]);
 		this.suggestEl.detach();

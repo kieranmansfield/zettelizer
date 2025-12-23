@@ -91,5 +91,5 @@ export function parseHighlightsFromContent(content: string): Highlight[] {
  * @returns Sanitized filename
  */
 export function sanitizeFilename(filename: string): string {
-	return filename.replace(/[\\,#%&\{\}\/*<>$\'\":@|?]/g, "");
+	return filename.replace(/[\\,#%&{}/*<>$'":@|?]/g, "");
 }

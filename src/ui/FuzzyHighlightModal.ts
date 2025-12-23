@@ -27,7 +27,7 @@ export class FuzzyHighlightModal extends FuzzySuggestModal<HighlightItem> {
 
 		// Customize modal
 		this.setPlaceholder(
-			"Search highlights... (Space to select, Enter to confirm)"
+			"Search highlights (space to select, enter to confirm)"
 		);
 	}
 
@@ -105,7 +105,7 @@ export class FuzzyHighlightModal extends FuzzySuggestModal<HighlightItem> {
 
 	// Override to handle space bar
 	onOpen(): void {
-		super.onOpen();
+		void super.onOpen();
 
 		// Add event listener for space bar on modal
 		this.modalEl.addEventListener("keydown", this.handleKeyDown);

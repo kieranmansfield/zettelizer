@@ -25,7 +25,7 @@ export function processTemplate(
 	let result = template;
 
 	// Replace all variables
-	Object.entries(variables).forEach(([key, value]) => {
+	(Object.entries(variables) as [keyof TemplateVariables, string][]).forEach(([key, value]) => {
 		const regex = new RegExp(`{{${key}}}`, "g");
 		result = result.replace(regex, value);
 	});
