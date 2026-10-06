@@ -1,4 +1,56 @@
-import { Highlight } from "../types";
+import { Highlight } from '../types'
+
+// Matches a block ID (^blockid) at the end of a line
+const BLOCK_ID_REGEX = /\s*\^([\w-]+)\s*$/
+
+/** Tags are case-insensitive, so they are normalized to lowercase. */
+function extractTags(line: string): string[] {
+	return [...line.matchAll(/#([\w-]+)/g)].map((m) => m[1].toLowerCase())
+}
+
+/**
+ * Whether a (trimmed) line belongs to the same block as the line after it.
+ * Readwise highlights are typically blockquotes (>) or continuous text.
+ */
+function continuesBlock(line: string, isBlockquote: boolean): boolean {
+	if (isBlockquote) return line.startsWith('>')
+	return line !== '' && !line.startsWith('#') && !line.startsWith('---')
+}
+
+/** Looks backwards from the block ID line to find where the highlight starts. */
+function findBlockStart(lines: string[], endIndex: number): number {
+	const isBlockquote = lines[endIndex].trim().startsWith('>')
+	let start = endIndex
+	while (start > 0 && continuesBlock(lines[start - 1].trim(), isBlockquote)) {
+		start--
+	}
+	return start
+}
+
+/** Strips blockquote markers, the block ID (last line only) and markdown formatting. */
+function cleanLine(line: string, isLast: boolean): string {
+	let text = line
+	if (text.trim().startsWith('>')) text = text.replace(/^\s*>\s?/, '')
+	if (isLast) text = text.replace(BLOCK_ID_REGEX, '')
+	return text.replace(/==/g, '').replace(/\*\*/g, '').replace(/__/g, '').trim()
+}
+
+function parseHighlightAt(lines: string[], index: number): Highlight | null {
+	const match = lines[index].match(BLOCK_ID_REGEX)
+	if (!match) return null
+
+	const start = findBlockStart(lines, index)
+	const text = lines
+		.slice(start, index + 1)
+		.map((line, offset) => cleanLine(line, start + offset === index))
+		.filter((line) => line.length > 0)
+		.join(' ')
+		.trim()
+	if (text.length === 0) return null
+
+	const tags = extractTags(lines[index])
+	return { text, blockId: match[1], tags: tags.length > 0 ? tags : undefined }
+}
 
 /**
  * Parses markdown content to extract blocks with block IDs
@@ -6,90 +58,6 @@ import { Highlight } from "../types";
  * @returns Array of Highlight objects with text and blockId
  */
 export function parseHighlightsFromContent(content: string): Highlight[] {
-	const highlights: Highlight[] = [];
-	const lines = content.split("\n");
-
-	// Regex to match block IDs: ^blockid at the end of a line
-	const blockIdRegex = /\s*\^([\w-]+)\s*$/;
-
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
-		const match = line.match(blockIdRegex);
-
-		if (match) {
-			const blockId = match[1];
-
-			// Look backwards to find the start of this highlight block
-			// Readwise highlights are typically blockquotes (>) or continuous text
-			let startIndex = i;
-
-			// Check if current line is a blockquote
-			const isBlockquote = line.trim().startsWith(">");
-
-			if (isBlockquote) {
-				// For blockquotes, find where the blockquote starts
-				while (startIndex > 0 && lines[startIndex - 1].trim().startsWith(">")) {
-					startIndex--;
-				}
-			} else {
-				// For regular text, look for empty lines or separators
-				while (
-					startIndex > 0 &&
-					lines[startIndex - 1].trim() !== "" &&
-					!lines[startIndex - 1].trim().startsWith("#") &&
-					!lines[startIndex - 1].trim().startsWith("---")
-				) {
-					startIndex--;
-				}
-			}
-
-			// Collect all lines from start to current (with block ID)
-			const textLines: string[] = [];
-			for (let j = startIndex; j <= i; j++) {
-				let textLine = lines[j];
-
-				// Remove blockquote markers
-				if (textLine.trim().startsWith(">")) {
-					textLine = textLine.replace(/^\s*>\s?/, "");
-				}
-
-				// Remove block ID from the last line
-				if (j === i) {
-					textLine = textLine.replace(blockIdRegex, "");
-				}
-
-				// Remove markdown formatting (==highlights==, **bold**, etc.)
-				textLine = textLine
-					.replace(/==/g, "")
-					.replace(/\*\*/g, "")
-					.replace(/__/g, "")
-					.trim();
-
-				if (textLine.length > 0) {
-					textLines.push(textLine);
-				}
-			}
-
-			const text = textLines.join(" ").trim();
-
-			// Skip empty highlights
-			if (text.length > 0) {
-				highlights.push({
-					text,
-					blockId,
-				});
-			}
-		}
-	}
-
-	return highlights;
-}
-
-/**
- * Sanitizes a filename by removing invalid characters
- * @param filename The filename to sanitize
- * @returns Sanitized filename
- */
-export function sanitizeFilename(filename: string): string {
-	return filename.replace(/[\\,#%&{}/*<>$'":@|?]/g, "");
+	const lines = content.split('\n')
+	return lines.flatMap((_, i) => parseHighlightAt(lines, i) ?? [])
 }

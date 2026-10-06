@@ -5,6 +5,7 @@ export interface ZettelizerSettings {
 	truncateLength: number
 	templatePath: string
 	sourceProperty: string
+	autoOpenAppendedNotes: boolean
 }
 
 export const DEFAULT_SETTINGS: ZettelizerSettings = {
@@ -14,4 +15,5 @@ export const DEFAULT_SETTINGS: ZettelizerSettings = {
 	truncateLength: 100,
 	templatePath: '',
 	sourceProperty: 'sources',
+	autoOpenAppendedNotes: true,
 }

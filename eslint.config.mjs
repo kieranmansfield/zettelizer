@@ -57,7 +57,7 @@ export default [
 					ignoredTypeNames: ['ZettelId'],
 				},
 			],
-			...obsidianmd.configs.recommended,
 		},
 	},
+	...obsidianmd.configs.recommended,
 ]
