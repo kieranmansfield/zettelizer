@@ -1,6 +1,6 @@
 import type { ZettelizerSettings } from '../settings'
 import type { NoteRef, UiPort } from '../intake/ports'
-import { renderDocument, safeName } from './render'
+import { DEFAULT_FILENAME_TEMPLATE, DEFAULT_FILENAME_TEMPLATE_NO_AUTHOR, fill, renderDocument, safeName } from './render'
 
 const BASE = 'https://readwise.io/api/v2'
 
@@ -58,13 +58,15 @@ export interface LibraryVault {
 	exists(path: string): Promise<boolean>
 	createFolder(path: string): Promise<void>
 	find(path: string): NoteRef | null
+	/** The imported note for this Readwise document id, wherever it lives in the vault. */
+	findByReadwiseId(id: number): NoteRef | null
 	create(path: string, content: string): Promise<NoteRef>
 	modify(note: NoteRef, content: string): Promise<void>
 	/** Mirrors the status into the note's `status` property. */
 	setStatusProperty(note: NoteRef, status: string): Promise<void>
 }
 
-export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting' | 'readwiseNoteTemplate' | 'readwiseHighlightTemplate'>
+export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting' | 'readwiseNoteTemplate' | 'readwiseHighlightTemplate' | 'readwiseFilenameTemplate'>
 
 export interface LibraryDeps {
 	http: HttpPort
@@ -81,6 +83,16 @@ export function readwiseNoteInfo(fm: Record<string, unknown> | undefined): { id:
 	const id = Number(fm?.id)
 	if (!id || !String(fm?.type ?? '').startsWith('readwise-')) return null
 	return { id, status: typeof fm?.status === 'string' ? fm.status : undefined }
+}
+
+/** Renders an export; the status tag lives in `status`, every other document tag stays a tag. */
+function renderExport(data: RwExport, settings: LibrarySettings): string {
+	const bookTags = (data.book_tags ?? []).map((t) => t.name)
+	const status = bookTags.find((t) => STATUSES.includes(t)) ?? 'process'
+	return renderDocument(data, bookTags.filter((t) => !STATUSES.includes(t)), status, {
+		note: settings.readwiseNoteTemplate,
+		highlight: settings.readwiseHighlightTemplate,
+	})
 }
 
 /**
@@ -185,6 +197,21 @@ export function createLibrary({ http, vault, ui, settings, getToken, cache }: Li
 		}
 	}
 
+	/** Note path from the filename template; a name taken by another document gets the id prepended. */
+	function freePath(doc: RwDocument): string {
+		const name = safeName(
+			fill(settings.readwiseFilenameTemplate || (doc.author ? DEFAULT_FILENAME_TEMPLATE : DEFAULT_FILENAME_TEMPLATE_NO_AUTHOR), {
+				title: doc.title,
+				author: doc.author ?? '',
+				category: doc.category,
+				id: String(doc.id),
+			})
+		)
+		const file = name || `${safeName(doc.title)} highlights`
+		const path = `${settings.readwiseFolder}/${file}.md`
+		return vault.find(path) ? `${settings.readwiseFolder}/${doc.id} ${file}.md` : path
+	}
+
 	return {
 		/** Calls `listener` with the document list now (if loaded) and again whenever it grows or changes. */
 		subscribe(listener: (docs: RwDocument[]) => void): () => void {
@@ -202,22 +229,17 @@ export function createLibrary({ http, vault, ui, settings, getToken, cache }: Li
 		/** Imports (or finds, with skipExisting) the document's note and opens it. Null on failure. */
 		async importDocument(doc: RwDocument): Promise<NoteRef | null> {
 			return guarded(async () => {
-				const path = `${settings.readwiseFolder}/${safeName(doc.title)} Highlights.md`
-				const existing = vault.find(path)
+				// Identity is the Readwise id, never the name: two documents may share a title.
+				const existing = vault.findByReadwiseId(doc.id)
 				if (existing && settings.skipExisting) {
 					ui.notify('Note already exists, opening it.')
 					await ui.open(existing)
 					return existing
 				}
+				const path = existing?.path ?? freePath(doc)
 				const data = await exportDocument(doc.id)
 				if (!data) throw new Error('Document not found in export.')
-				const bookTags = (data.book_tags ?? []).map((t) => t.name)
-				// The status tag lives in `status`; every other document tag stays a tag.
-				const status = bookTags.find((t) => STATUSES.includes(t)) ?? 'process'
-				const md = renderDocument(data, bookTags.filter((t) => !STATUSES.includes(t)), status, {
-					note: settings.readwiseNoteTemplate,
-					highlight: settings.readwiseHighlightTemplate,
-				})
+				const md = renderExport(data, settings)
 				if (!(await vault.exists(settings.readwiseFolder))) await vault.createFolder(settings.readwiseFolder)
 				let note = existing
 				if (note) await vault.modify(note, md)

@@ -37,7 +37,7 @@ export const DEFAULT_HIGHLIGHT_TEMPLATE = `> <mark>{{text}}</mark>{{tags}} ^{{id
 ---`
 
 /** Single pass, so values are never re-scanned. A line holding only an empty placeholder is dropped. */
-function fill(template: string, vars: Record<string, string>): string {
+export function fill(template: string, vars: Record<string, string>): string {
 	const lone = /^{{(\w+)}}\n/gm
 	return template
 		.replace(lone, (m, k: string) => (k in vars && vars[k] === '' ? '' : m))
@@ -83,6 +83,10 @@ export function renderDocument(
 		highlights: highlights.join('\n'),
 	})
 }
+
+export const DEFAULT_FILENAME_TEMPLATE = '{{title}} by {{author}} highlights'
+/** Used instead of the default when the document has no author. */
+export const DEFAULT_FILENAME_TEMPLATE_NO_AUTHOR = '{{title}} highlights'
 
 /** Strips characters that are illegal in file names. */
 export const safeName = (s: string) => s.replace(/[\\/:*?"<>|#^[\]]/g, '').trim()

@@ -31,12 +31,16 @@ function setup(opts: { routes?: Record<string, (r: Req) => { status: number; jso
 			exists: async (p) => p in files || p === 'Readwise',
 			createFolder: async () => {},
 			find: (p) => (p in files ? ref(p) : null),
+			findByReadwiseId: (id) => {
+				const p = Object.keys(files).find((k) => files[k].includes(`id: "${id}"`))
+				return p ? ref(p) : null
+			},
 			create: async (p, c) => ((files[p] = c), ref(p)),
 			modify: async (n, c) => void (files[n.path] = c),
 			setStatusProperty: async (_n, s) => void statusProps.push(s),
 		},
 		ui: { notify: (m) => void messages.push(m), open: async (n) => void opened.push(n.path) },
-		settings: { readwiseFolder: 'Readwise', skipExisting: true, readwiseNoteTemplate: '', readwiseHighlightTemplate: '', ...opts.settings },
+		settings: { readwiseFolder: 'Readwise', skipExisting: true, readwiseNoteTemplate: '', readwiseHighlightTemplate: '', readwiseFilenameTemplate: '', ...opts.settings },
 		cache: { load: async () => opts.cached ?? null, save: async (c) => void saved.push(c) },
 		getToken: () => (opts.token === undefined ? 'tok' : opts.token),
 	})
@@ -96,7 +100,7 @@ describe('readwise library', () => {
 		}
 		const t = setup({ routes: { 'GET /export/': () => ({ status: 200, json: { results: [tagged], nextPageCursor: null } }) } })
 		await t.lib.importDocument(DOC)
-		const md = t.files['Readwise/My Book Highlights.md']
+		const md = t.files['Readwise/My Book by A highlights.md']
 		const fm = md.split('---')[1]
 		expect(fm).toContain('tags:\n  - stoicism\n  - to-read\ntitle:')
 		expect(fm).not.toContain('mental-health')
@@ -110,27 +114,27 @@ describe('readwise library', () => {
 	it('imports a document into a sanitized path and opens it', async () => {
 		const t = setup({ routes: { 'GET /export/': () => ({ status: 200, json: { results: [EXPORT], nextPageCursor: null } }) } })
 		await t.lib.importDocument(DOC)
-		expect(Object.keys(t.files)).toEqual(['Readwise/My Book Highlights.md'])
-		expect(t.files['Readwise/My Book Highlights.md']).toContain('<mark>hello</mark> ^1')
-		expect(t.opened).toEqual(['Readwise/My Book Highlights.md'])
+		expect(Object.keys(t.files)).toEqual(['Readwise/My Book by A highlights.md'])
+		expect(t.files['Readwise/My Book by A highlights.md']).toContain('<mark>hello</mark> ^1')
+		expect(t.opened).toEqual(['Readwise/My Book by A highlights.md'])
 	})
 
 	it('opens an existing note without calling Readwise when skipExisting is on', async () => {
-		const t = setup({ files: { 'Readwise/My Book Highlights.md': 'old' } })
+		const t = setup({ files: { 'Readwise/My Book by A highlights.md': 'id: "7" old' } })
 		await t.lib.importDocument(DOC)
 		expect(t.reqs).toHaveLength(0)
-		expect(t.files['Readwise/My Book Highlights.md']).toBe('old')
+		expect(t.files['Readwise/My Book by A highlights.md']).toBe('id: "7" old')
 		expect(t.opened).toHaveLength(1)
 	})
 
 	it('overwrites an existing note when skipExisting is off', async () => {
 		const t = setup({
-			files: { 'Readwise/My Book Highlights.md': 'old' },
+			files: { 'Readwise/My Book by A highlights.md': 'id: "7" old' },
 			settings: { skipExisting: false },
 			routes: { 'GET /export/': () => ({ status: 200, json: { results: [EXPORT], nextPageCursor: null } }) },
 		})
 		await t.lib.importDocument(DOC)
-		expect(t.files['Readwise/My Book Highlights.md']).toContain('hello')
+		expect(t.files['Readwise/My Book by A highlights.md']).toContain('hello')
 	})
 
 	it('setStatus removes other status tags, adds the new one, and mirrors it to the note', async () => {
@@ -171,5 +175,24 @@ describe('readwiseNoteInfo', () => {
 		expect(readwiseNoteInfo({ id: '7', type: 'note' })).toBeNull()
 		expect(readwiseNoteInfo({ type: 'readwise-books' })).toBeNull()
 		expect(readwiseNoteInfo(undefined)).toBeNull()
+	})
+
+	it('imports a different document with the same title next to the first', async () => {
+		const t = setup({
+			files: { 'Readwise/My Book by A highlights.md': 'id: "99" other' },
+			routes: { 'GET /export/': () => ({ status: 200, json: { results: [EXPORT], nextPageCursor: null } }) },
+		})
+		await t.lib.importDocument(DOC)
+		expect(t.files['Readwise/My Book by A highlights.md']).toBe('id: "99" other')
+		expect(t.files['Readwise/7 My Book by A highlights.md']).toContain('hello')
+	})
+
+	it('names notes from the filename template', async () => {
+		const t = setup({
+			settings: { readwiseFilenameTemplate: '{{author}} - {{title}}' },
+			routes: { 'GET /export/': () => ({ status: 200, json: { results: [EXPORT], nextPageCursor: null } }) },
+		})
+		await t.lib.importDocument(DOC)
+		expect(Object.keys(t.files)).toEqual(['Readwise/A - My Book.md'])
 	})
 })

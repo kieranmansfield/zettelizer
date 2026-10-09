@@ -132,6 +132,11 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 						control: { type: 'toggle', key: 'skipExisting' },
 					},
 					{
+						name: 'File name template',
+						desc: 'Name of imported notes. Variables: {{title}}, {{author}}, {{category}}, {{id}}. Leave empty for "{{title}} by {{author}} highlights". A name already used by another document gets its id added in front.',
+						control: { type: 'text', key: 'readwiseFilenameTemplate', placeholder: '{{title}} by {{author}} highlights' },
+					},
+					{
 						type: 'page',
 						name: 'Export template',
 						desc: 'Customise how imported Readwise notes are written.',

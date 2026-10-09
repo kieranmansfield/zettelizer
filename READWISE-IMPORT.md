@@ -54,7 +54,7 @@ Token lives in the plugin's `data.json`. Confirm `data.json` is gitignored befor
 1. Fetch all documents (page through `/books/`), cache for the session.
 2. Modal rows: `Title — Author · category · N highlights`; type to filter, Enter to select.
 3. Fetch the document via `/export/?ids=<id>`.
-4. Render to `<readwiseFolder>/<Title> Highlights.md`.
+4. Render to `<readwiseFolder>/<Title> by <Author> highlights.md` (configurable file name template).
 5. If the file exists and `skipExisting` is on, open it instead of overwriting.
 6. Show a Notice for every outcome (imported, skipped, failed with cause).
 

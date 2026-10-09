@@ -12,6 +12,7 @@ export interface ZettelizerSettings {
 	/** Empty means the built-in default (see readwise/render.ts). */
 	readwiseNoteTemplate: string
 	readwiseHighlightTemplate: string
+	readwiseFilenameTemplate: string
 }
 
 export const DEFAULT_SETTINGS: ZettelizerSettings = {
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: ZettelizerSettings = {
 	syncOnStartup: true,
 	readwiseNoteTemplate: '',
 	readwiseHighlightTemplate: '',
+	readwiseFilenameTemplate: '',
 }
 
 const LEGACY_SECRET_ID = 'zettelizer-readwise-token'
