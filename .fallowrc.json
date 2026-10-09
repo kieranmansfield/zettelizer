@@ -4,7 +4,8 @@
 		"tslib",
 		"@typescript-eslint/eslint-plugin",
 		"@eslint/js",
-		"typescript-eslint"
+		"typescript-eslint",
+		"obsidian"
 	],
 	"usedClassMembers": [
 		{
