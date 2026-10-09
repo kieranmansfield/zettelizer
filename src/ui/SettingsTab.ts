@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, SettingDefinitionItem } from 'obsidian'
 import type ZettelizerPlugin from '../main'
+import { DEFAULT_HIGHLIGHT_TEMPLATE, DEFAULT_NOTE_TEMPLATE } from '../readwise/render'
 
 const TEMPLATE_VARIABLES: [string, string][] = [
 	['{{highlight}}', 'The raw highlight text (without block ID)'],
@@ -12,6 +13,30 @@ const TEMPLATE_VARIABLES: [string, string][] = [
 	['{{date}}', 'Current date (YYYY-MM-DD)'],
 	['{{time}}', 'Current time (HH:mm:ss)'],
 ]
+
+const NOTE_VARIABLES: [string, string][] = [
+	['{{title}}', 'Quoted title'],
+	['{{author}}, {{category}}, {{status}}, {{cover}}, {{url}}', 'Plain values'],
+	['{{id}}', 'Quoted Readwise ID'],
+	['{{tagsYaml}}, {{authorsYaml}}, {{imageYaml}}, {{sourcesYaml}}', 'Ready-made frontmatter entries; a line holding only an empty one is dropped'],
+	['{{highlights}}', 'All rendered highlights'],
+]
+
+const HIGHLIGHT_VARIABLES: [string, string][] = [
+	['{{text}}', 'Highlight text'],
+	['{{id}}', 'Highlight ID (the block ID)'],
+	['{{tags}}', 'Highlight tags, inline: " #a #b"'],
+	['{{note}}', 'Your note on the highlight, if any'],
+	['{{noteBlock}}', 'The note as "**Note:** …" after a blank line, or nothing'],
+]
+
+const variableList = (vars: [string, string][]) => ({
+	name: 'Variables',
+	render: (setting: { descEl: HTMLElement }) => {
+		const list = setting.descEl.createEl('ul')
+		for (const [name, text] of vars) list.createEl('li', { text: `${name} - ${text}` })
+	},
+})
 
 const EXAMPLE_TEMPLATE = `---
 created: {{date}}
@@ -111,6 +136,37 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 						name: 'Skip existing notes',
 						desc: 'Open an already-imported note instead of overwriting it',
 						control: { type: 'toggle', key: 'skipExisting' },
+					},
+					{
+						type: 'page',
+						name: 'Export template',
+						desc: 'Customise how imported Readwise notes are written.',
+						items: [
+							{
+								type: 'group',
+								heading: 'Note',
+								items: [
+									{
+										name: 'Note template',
+										desc: 'Whole note. Leave empty for the default.',
+										control: { type: 'textarea', key: 'readwiseNoteTemplate', placeholder: DEFAULT_NOTE_TEMPLATE, rows: 14 },
+									},
+									variableList(NOTE_VARIABLES),
+								],
+							},
+							{
+								type: 'group',
+								heading: 'Highlight',
+								items: [
+									{
+										name: 'Highlight template',
+										desc: 'Repeated for each highlight. Leave empty for the default.',
+										control: { type: 'textarea', key: 'readwiseHighlightTemplate', placeholder: DEFAULT_HIGHLIGHT_TEMPLATE, rows: 6 },
+									},
+									variableList(HIGHLIGHT_VARIABLES),
+								],
+							},
+						],
 					},
 				],
 			},

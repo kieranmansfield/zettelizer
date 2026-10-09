@@ -36,7 +36,7 @@ function setup(opts: { routes?: Record<string, (r: Req) => { status: number; jso
 			setStatusProperty: async (_n, s) => void statusProps.push(s),
 		},
 		ui: { notify: (m) => void messages.push(m), open: async (n) => void opened.push(n.path) },
-		settings: { readwiseFolder: 'Readwise', skipExisting: true, ...opts.settings },
+		settings: { readwiseFolder: 'Readwise', skipExisting: true, readwiseNoteTemplate: '', readwiseHighlightTemplate: '', ...opts.settings },
 		cache: { load: async () => opts.cached ?? null, save: async (c) => void saved.push(c) },
 		getToken: () => (opts.token === undefined ? 'tok' : opts.token),
 	})

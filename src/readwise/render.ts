@@ -16,35 +16,72 @@ const yamlList = (key: string, items: Iterable<string>) => {
 	return list.length ? [`${key}:`, ...list.map((i) => `  - ${i}`)] : []
 }
 
+export const DEFAULT_NOTE_TEMPLATE = `---
+{{tagsYaml}}
+title: {{title}}
+type: readwise-{{category}}
+status: {{status}}
+{{authorsYaml}}
+id: {{id}}
+{{imageYaml}}
+{{sourcesYaml}}
+---
+
+# Highlights
+{{highlights}}
+`
+
+export const DEFAULT_HIGHLIGHT_TEMPLATE = `> <mark>{{text}}</mark>{{tags}} ^{{id}}{{noteBlock}}
+
+
+---`
+
+/** Single pass, so values are never re-scanned. A line holding only an empty placeholder is dropped. */
+function fill(template: string, vars: Record<string, string>): string {
+	const lone = /^{{(\w+)}}\n/gm
+	return template
+		.replace(lone, (m, k: string) => (k in vars && vars[k] === '' ? '' : m))
+		.replace(/{{(\w+)}}/g, (m, k: string) => (Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : m))
+}
+
 /**
  * Renders an exported Readwise document to markdown. Document tags go in `tags`; highlight tags
- * stay with their highlight, inline on its block-id line.
+ * stay with their highlight, inline on its block-id line. Empty templates mean the defaults.
  * Highlight notes are written out verbatim.
  */
-export function renderDocument(doc: RwExport, documentTags: string[], status: string): string {
+export function renderDocument(
+	doc: RwExport,
+	documentTags: string[],
+	status: string,
+	templates: { note?: string; highlight?: string } = {}
+): string {
 	const id = doc.user_book_id
 
-	const fm = [
-		'---',
-		...yamlList('tags', documentTags.map(tagName).filter(Boolean)),
-		`title: ${q(doc.title)}`,
-		`type: readwise-${doc.category}`,
-		`status: ${status}`,
-		...(doc.author ? yamlList('authors', [q(doc.author)]) : []),
-		`id: ${q(String(id))}`,
-		...(doc.cover_image_url ? [`image: ${q(doc.cover_image_url)}`] : []),
-		...yamlList('sources', [doc.source_url, `https://readwise.io/bookreview/${id}`].filter((u): u is string => !!u).map(q)),
-		'---',
-		'',
-		'# Highlights',
-	]
+	const highlights = doc.highlights.map((h) =>
+		fill(templates.highlight || DEFAULT_HIGHLIGHT_TEMPLATE, {
+			text: h.text.replace(/\n+/g, ' '),
+			id: String(h.id),
+			tags: tagNames(h.tags).map((t) => ` #${t}`).join(''),
+			note: h.note ?? '',
+			noteBlock: h.note ? `\n\n**Note:** ${h.note}` : '',
+		})
+	)
 
-	const body = doc.highlights.map((h) => {
-		const inline = tagNames(h.tags).map((t) => ` #${t}`).join('')
-		const note = h.note ? `\n\n**Note:** ${h.note}` : ''
-		return `> <mark>${h.text.replace(/\n+/g, ' ')}</mark>${inline} ^${h.id}${note}\n\n\n---`
+	const sources = [doc.source_url, `https://readwise.io/bookreview/${id}`].filter((u): u is string => !!u)
+	return fill(templates.note || DEFAULT_NOTE_TEMPLATE, {
+		title: q(doc.title),
+		author: doc.author ?? '',
+		category: doc.category,
+		status,
+		id: q(String(id)),
+		cover: doc.cover_image_url ?? '',
+		url: doc.source_url ?? '',
+		tagsYaml: yamlList('tags', documentTags.map(tagName).filter(Boolean)).join('\n'),
+		authorsYaml: doc.author ? yamlList('authors', [q(doc.author)]).join('\n') : '',
+		imageYaml: doc.cover_image_url ? `image: ${q(doc.cover_image_url)}` : '',
+		sourcesYaml: yamlList('sources', sources.map(q)).join('\n'),
+		highlights: highlights.join('\n'),
 	})
-	return [...fm, ...body, ''].join('\n')
 }
 
 /** Strips characters that are illegal in file names. */

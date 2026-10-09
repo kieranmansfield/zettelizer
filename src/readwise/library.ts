@@ -64,7 +64,7 @@ export interface LibraryVault {
 	setStatusProperty(note: NoteRef, status: string): Promise<void>
 }
 
-export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting'>
+export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting' | 'readwiseNoteTemplate' | 'readwiseHighlightTemplate'>
 
 export interface LibraryDeps {
 	http: HttpPort
@@ -212,7 +212,10 @@ export function createLibrary({ http, vault, ui, settings, getToken, cache }: Li
 				const bookTags = (data.book_tags ?? []).map((t) => t.name)
 				// The status tag lives in `status`; every other document tag stays a tag.
 				const status = bookTags.find((t) => STATUSES.includes(t)) ?? 'process'
-				const md = renderDocument(data, bookTags.filter((t) => !STATUSES.includes(t)), status)
+				const md = renderDocument(data, bookTags.filter((t) => !STATUSES.includes(t)), status, {
+					note: settings.readwiseNoteTemplate,
+					highlight: settings.readwiseHighlightTemplate,
+				})
 				if (!(await vault.exists(settings.readwiseFolder))) await vault.createFolder(settings.readwiseFolder)
 				let note = existing
 				if (note) await vault.modify(note, md)
