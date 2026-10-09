@@ -6,6 +6,8 @@ export interface ZettelizerSettings {
 	templatePath: string
 	sourceProperty: string
 	autoOpenAppendedNotes: boolean
+	readwiseToken: string
+	skipExisting: boolean
 }
 
 export const DEFAULT_SETTINGS: ZettelizerSettings = {
@@ -16,4 +18,6 @@ export const DEFAULT_SETTINGS: ZettelizerSettings = {
 	templatePath: '',
 	sourceProperty: 'sources',
 	autoOpenAppendedNotes: true,
+	readwiseToken: '',
+	skipExisting: true,
 }

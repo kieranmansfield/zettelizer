@@ -100,6 +100,22 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 			},
 			{
 				type: 'group',
+				heading: 'Readwise import',
+				items: [
+					{
+						name: 'Readwise API token',
+						desc: 'Used only to call readwise.io when you run the import and status commands. Stored in this plugin\'s data.json.',
+						control: { type: 'text', key: 'readwiseToken', placeholder: 'Token' },
+					},
+					{
+						name: 'Skip existing notes',
+						desc: 'Open an already-imported note instead of overwriting it',
+						control: { type: 'toggle', key: 'skipExisting' },
+					},
+				],
+			},
+			{
+				type: 'group',
 				heading: 'Template variables',
 				items: [
 					{
