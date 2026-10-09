@@ -24,7 +24,7 @@ importers:
         specifier: 0.28.2
         version: 0.28.2
       eslint:
-        specifier: ^9.39.2
+        specifier: ^9.39.5
         version: 9.39.5(supports-color@7.2.0)
       eslint-plugin-obsidianmd:
         specifier: ^0.4.2
