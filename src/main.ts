@@ -1,5 +1,5 @@
 import { addIcon, Plugin } from 'obsidian'
-import { ZettelizerSettings, DEFAULT_SETTINGS } from './settings'
+import { ZettelizerSettings, DEFAULT_SETTINGS, migrateLegacyToken } from './settings'
 import { registerCommands } from './commands/commands'
 import ZettelizerSettingTab from './ui/SettingsTab'
 
@@ -26,7 +26,9 @@ export default class ZettelizerPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as ZettelizerSettings
+		const data = (await this.loadData()) ?? {}
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data) as ZettelizerSettings
+		if (migrateLegacyToken(this.settings, this.app.secretStorage)) await this.saveSettings()
 	}
 
 	async saveSettings() {

@@ -4,6 +4,12 @@ import { renderDocument, safeName } from './render'
 
 const BASE = 'https://readwise.io/api/v2'
 
+/** Concurrent /books/ requests; Readwise rate-limits, so keep this small. */
+const PARALLEL_PAGES = 4
+const PAGE_SIZE = 1000
+/** Size of the very first request on an empty cache, kept small so the picker fills quickly. */
+const FIRST_PAGE = 50
+
 export const STATUSES = ['process', 'processing', 'processed']
 
 export interface RwDocument {
@@ -21,7 +27,21 @@ export interface RwExport {
 	category: string
 	cover_image_url?: string
 	source_url?: string
+	/** Tags on the document itself (not on its highlights). */
+	book_tags?: { name: string }[]
 	highlights: { id: number; text: string; note?: string; tags?: { name: string }[] }[]
+}
+
+/** The document list as last synced, so later sessions only fetch what changed. */
+export interface DocCache {
+	docs: RwDocument[]
+	/** ISO time the sync started; the next sync asks Readwise for documents updated after it. */
+	syncedAt: string
+}
+
+export interface DocCacheStore {
+	load(): Promise<DocCache | null>
+	save(cache: DocCache): Promise<void>
 }
 
 interface RwTag {
@@ -44,13 +64,16 @@ export interface LibraryVault {
 	setStatusProperty(note: NoteRef, status: string): Promise<void>
 }
 
-export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseToken' | 'readwiseFolder' | 'skipExisting'>
+export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting'>
 
 export interface LibraryDeps {
 	http: HttpPort
 	vault: LibraryVault
 	ui: Pick<UiPort, 'notify' | 'open'>
 	settings: LibrarySettings
+	/** The Readwise token, or null if none is set. */
+	getToken(): string | null
+	cache: DocCacheStore
 }
 
 /** Readwise id and current status from a note's frontmatter; null if it is not an imported Readwise note. */
@@ -61,14 +84,17 @@ export function readwiseNoteInfo(fm: Record<string, unknown> | undefined): { id:
 }
 
 /**
- * Readwise library: lists documents (cached for the session), imports one into the vault,
+ * Readwise library: lists documents (cached on disk, refreshed incrementally), imports one into the vault,
  * and syncs its status tag to Readwise and the note. Failures surface as notices.
  */
-export function createLibrary({ http, vault, ui, settings }: LibraryDeps) {
-	let docCache: RwDocument[] | undefined
+export function createLibrary({ http, vault, ui, settings, getToken, cache }: LibraryDeps) {
+	let docs: RwDocument[] | undefined
+	let syncedAt: string | undefined
+	let running: Promise<void> | undefined
+	const listeners = new Set<(docs: RwDocument[]) => void>()
 
 	async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-		const token = settings.readwiseToken
+		const token = getToken()
 		if (!token) throw new Error('Readwise token is not set (Settings → Zettelizer).')
 		const res = await http.request({
 			method,
@@ -80,13 +106,52 @@ export function createLibrary({ http, vault, ui, settings }: LibraryDeps) {
 		return res.json as T
 	}
 
-	async function fetchDocuments(): Promise<RwDocument[]> {
-		const docs: RwDocument[] = []
-		for (let page = 1; ; page++) {
-			const r = await call<{ results: RwDocument[]; next: string | null }>('GET', `/books/?page_size=1000&page=${page}`)
-			docs.push(...r.results)
-			if (!r.next) return docs
+	const books = (pageSize: number, page: number, since?: string) =>
+		call<{ results: RwDocument[]; count: number }>(
+			'GET',
+			`/books/?page_size=${pageSize}&page=${page}` + (since ? `&updated__gt=${encodeURIComponent(since)}` : '')
+		)
+
+	function publish(next: RwDocument[]) {
+		docs = next
+		for (const l of listeners) l(next)
+	}
+
+	function merge(fresh: RwDocument[]) {
+		const byId = new Map((docs ?? []).map((d) => [d.id, d]))
+		for (const d of fresh) byId.set(d.id, d)
+		publish([...byId.values()])
+	}
+
+	/** Fetches documents updated after `since` (all of them if omitted), publishing the merged list after each batch. */
+	async function pull(since?: string): Promise<void> {
+		// Cold start: a small first page so the picker has something to show right away.
+		if (!since) merge((await books(FIRST_PAGE, 1)).results)
+		const first = await books(PAGE_SIZE, 1, since)
+		merge(first.results)
+		const pages = first.results.length ? Math.ceil(first.count / first.results.length) : 0
+		for (let n = 2; n <= pages; n += PARALLEL_PAGES) {
+			const batch = Array.from({ length: Math.min(PARALLEL_PAGES, pages - n + 1) }, (_, i) => books(PAGE_SIZE, n + i, since))
+			merge((await Promise.all(batch)).flatMap((r) => r.results))
 		}
+	}
+
+	// ponytail: documents deleted in Readwise linger in the cache, delete readwise-cache.json to resync
+	/** Loads the cached list, then pulls only what changed since the last sync. One sync runs at a time. */
+	function runSync(): Promise<void> {
+		return (running ??= (async () => {
+			const startedAt = new Date().toISOString()
+			if (!docs) {
+				const cached = await cache.load()
+				if (cached) {
+					publish(cached.docs)
+					syncedAt = cached.syncedAt
+				}
+			}
+			await pull(syncedAt)
+			syncedAt = startedAt
+			await cache.save({ docs: docs ?? [], syncedAt })
+		})().finally(() => (running = undefined)))
 	}
 
 	async function exportDocument(id: number): Promise<RwExport | undefined> {
@@ -121,8 +186,18 @@ export function createLibrary({ http, vault, ui, settings }: LibraryDeps) {
 	}
 
 	return {
-		/** All documents in the Readwise library; null (after a notice) on failure. */
-		documents: () => guarded(async () => (docCache ??= await fetchDocuments())),
+		/** Calls `listener` with the document list now (if loaded) and again whenever it grows or changes. */
+		subscribe(listener: (docs: RwDocument[]) => void): () => void {
+			listeners.add(listener)
+			if (docs) listener(docs)
+			return () => void listeners.delete(listener)
+		},
+
+		/** Syncs the document list; failures surface as a notice. */
+		sync: async (): Promise<void> => void (await guarded(runSync)),
+
+		/** Same sync, but failures are silent: for background use. */
+		warm: () => runSync().catch(() => {}),
 
 		async importDocument(doc: RwDocument): Promise<void> {
 			await guarded(async () => {
@@ -134,7 +209,10 @@ export function createLibrary({ http, vault, ui, settings }: LibraryDeps) {
 				}
 				const data = await exportDocument(doc.id)
 				if (!data) throw new Error('Document not found in export.')
-				const md = renderDocument(data)
+				const bookTags = (data.book_tags ?? []).map((t) => t.name)
+				// The status tag lives in `status`; every other document tag stays a tag.
+				const status = bookTags.find((t) => STATUSES.includes(t)) ?? 'process'
+				const md = renderDocument(data, bookTags.filter((t) => !STATUSES.includes(t)), status)
 				if (!(await vault.exists(settings.readwiseFolder))) await vault.createFolder(settings.readwiseFolder)
 				let note = existing
 				if (note) await vault.modify(note, md)

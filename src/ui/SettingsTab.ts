@@ -99,8 +99,13 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 				items: [
 					{
 						name: 'Readwise API token',
-						desc: 'Used only to call readwise.io when you run the import and status commands. Stored in this plugin\'s data.json.',
-						control: { type: 'text', key: 'readwiseToken', placeholder: 'Token' },
+						desc: 'Used only to call readwise.io when you run the import and status commands. Kept in Obsidian\'s secret storage, not in this plugin\'s data.json.',
+						control: { type: 'secret', key: 'readwiseTokenSecret' },
+					},
+					{
+						name: 'Sync document list on startup',
+						desc: 'When Obsidian starts, fetch your Readwise document list in the background (sends your token to readwise.io) so the import picker opens instantly. Needs a restart to apply.',
+						control: { type: 'toggle', key: 'syncOnStartup' },
 					},
 					{
 						name: 'Skip existing notes',

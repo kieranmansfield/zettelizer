@@ -1,6 +1,6 @@
 import { requestUrl, TFile, type App } from 'obsidian'
 import { fileAt, noteRef } from '../intake/obsidian'
-import type { HttpPort, LibraryVault } from './library'
+import type { DocCacheStore, HttpPort, LibraryVault } from './library'
 
 export const obsidianHttp: HttpPort = {
 	async request(req) {
@@ -23,5 +23,20 @@ export function readwiseVault(app: App): LibraryVault {
 			app.fileManager.processFrontMatter(fileAt(app, note.path), (fm: Record<string, unknown>) => {
 				fm.status = status
 			}),
+	}
+}
+
+/** Document list cache stored next to the plugin's data.json; a missing or unreadable file means no cache. */
+export function docCacheStore(app: App, pluginId: string): DocCacheStore {
+	const path = `${app.vault.configDir}/plugins/${pluginId}/readwise-cache.json`
+	return {
+		load: async () => {
+			try {
+				return JSON.parse(await app.vault.adapter.read(path))
+			} catch {
+				return null
+			}
+		},
+		save: (cache) => app.vault.adapter.write(path, JSON.stringify(cache)),
 	}
 }

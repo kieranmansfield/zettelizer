@@ -1,18 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { createLibrary, readwiseNoteInfo, type LibrarySettings, type RwDocument } from './library'
+import { createLibrary, readwiseNoteInfo, type DocCache, type LibrarySettings, type RwDocument } from './library'
 import type { NoteRef } from '../intake/ports'
+import { parseHighlightsFromContent } from '../utils/parser'
 
 type Req = { method: string; path: string; body?: unknown }
 
 const DOC: RwDocument = { id: 7, title: 'My: Book', author: 'A', category: 'books', num_highlights: 1 }
 const EXPORT = { user_book_id: 7, title: 'My: Book', author: 'A', category: 'books', highlights: [{ id: 1, text: 'hello' }] }
 
-function setup(opts: { routes?: Record<string, (r: Req) => { status: number; json?: unknown }>; files?: Record<string, string>; settings?: Partial<LibrarySettings> } = {}) {
+function setup(opts: { routes?: Record<string, (r: Req) => { status: number; json?: unknown }>; files?: Record<string, string>; settings?: Partial<LibrarySettings>; token?: string | null; cached?: DocCache } = {}) {
 	const reqs: Req[] = []
 	const files = { ...opts.files }
 	const messages: string[] = []
 	const opened: string[] = []
 	const statusProps: string[] = []
+	const saved: DocCache[] = []
 	const ref = (p: string): NoteRef => ({ path: p, basename: p.split('/').pop()!.replace(/\.md$/, '') })
 	const lib = createLibrary({
 		http: {
@@ -34,22 +36,75 @@ function setup(opts: { routes?: Record<string, (r: Req) => { status: number; jso
 			setStatusProperty: async (_n, s) => void statusProps.push(s),
 		},
 		ui: { notify: (m) => void messages.push(m), open: async (n) => void opened.push(n.path) },
-		settings: { readwiseToken: 'tok', readwiseFolder: 'Readwise', skipExisting: true, ...opts.settings },
+		settings: { readwiseFolder: 'Readwise', skipExisting: true, ...opts.settings },
+		cache: { load: async () => opts.cached ?? null, save: async (c) => void saved.push(c) },
+		getToken: () => (opts.token === undefined ? 'tok' : opts.token),
 	})
-	return { lib, reqs, files, messages, opened, statusProps }
+	return { lib, reqs, files, messages, opened, statusProps, saved }
 }
 
 describe('readwise library', () => {
-	it('pages through documents once and caches them', async () => {
+	const listed = (t: ReturnType<typeof setup>) => {
+		const seen: number[][] = []
+		t.lib.subscribe((docs) => void seen.push(docs.map((d) => d.id)))
+		return seen
+	}
+
+	it('cold start: small first page, then the full pages, publishing as it goes', async () => {
 		const t = setup({
 			routes: {
-				'GET /books/?page_size=1000&page=1': () => ({ status: 200, json: { results: [DOC], next: 'x' } }),
-				'GET /books/?page_size=1000&page=2': () => ({ status: 200, json: { results: [{ ...DOC, id: 8 }], next: null } }),
+				'GET /books/?page_size=50&page=1': () => ({ status: 200, json: { results: [DOC], count: 2 } }),
+				'GET /books/?page_size=1000&page=1': () => ({ status: 200, json: { results: [DOC], count: 2 } }),
+				'GET /books/?page_size=1000&page=2': () => ({ status: 200, json: { results: [{ ...DOC, id: 8 }], count: 2 } }),
 			},
 		})
-		expect((await t.lib.documents())?.map((d) => d.id)).toEqual([7, 8])
-		await t.lib.documents()
+		const seen = listed(t)
+		await t.lib.sync()
+		expect(seen).toEqual([[7], [7], [7, 8]])
+		expect(t.saved[0].docs.map((d) => d.id)).toEqual([7, 8])
+	})
+
+	it('publishes the cached list first and only pulls documents updated since the last sync', async () => {
+		const t = setup({
+			cached: { docs: [DOC, { ...DOC, id: 8 }], syncedAt: '2026-01-01T00:00:00.000Z' },
+			routes: { 'GET /books/?page_size=1000&page=1&updated__gt=2026-01-01T00%3A00%3A00.000Z': () => ({ status: 200, json: { results: [{ ...DOC, num_highlights: 5 }], count: 1 } }) },
+		})
+		let latest: RwDocument[] = []
+		t.lib.subscribe((docs) => (latest = docs))
+		await t.lib.sync()
+		expect(latest.map((d) => [d.id, d.num_highlights])).toEqual([[7, 5], [8, 1]])
+		expect(t.reqs).toHaveLength(1)
+		expect(t.saved[0].docs).toHaveLength(2)
+	})
+
+	it('runs one sync at a time and keeps the list in memory', async () => {
+		const t = setup({ routes: { 'GET /books/': () => ({ status: 200, json: { results: [DOC], count: 1 } }) } })
+		await Promise.all([t.lib.sync(), t.lib.warm()])
 		expect(t.reqs).toHaveLength(2)
+		const seen = listed(t)
+		expect(seen).toEqual([[7]])
+	})
+
+	it('keeps document tags, highlight tags and highlight notes apart and intact', async () => {
+		const tagged = {
+			...EXPORT,
+			book_tags: [{ name: 'stoicism' }, { name: 'to read' }, { name: 'processed' }],
+			highlights: [
+				{ id: 1, text: 'first', note: 'my note\nline two\n.fav', tags: [{ name: 'mental health' }, { name: '!core-idea' }, { name: '2024' }, { name: '?!' }] },
+				{ id: 2, text: 'second' },
+			],
+		}
+		const t = setup({ routes: { 'GET /export/': () => ({ status: 200, json: { results: [tagged], nextPageCursor: null } }) } })
+		await t.lib.importDocument(DOC)
+		const md = t.files['Readwise/My Book Highlights.md']
+		const fm = md.split('---')[1]
+		expect(fm).toContain('tags:\n  - stoicism\n  - to-read\ntitle:')
+		expect(fm).not.toContain('mental-health')
+		expect(fm).toContain('status: processed')
+		expect(md).toContain('<mark>first</mark> #mental-health #core-idea #_2024 ^1\n\n**Note:** my note\nline two\n.fav')
+		// the importer's own output still parses: tags land in `tags`, not in the text
+		const [first] = parseHighlightsFromContent(md)
+		expect(first).toMatchObject({ text: 'first', blockId: '1', tags: ['mental-health', 'core-idea', '_2024'] })
 	})
 
 	it('imports a document into a sanitized path and opens it', async () => {
@@ -99,8 +154,8 @@ describe('readwise library', () => {
 	})
 
 	it('reports a missing token and HTTP failures as notices', async () => {
-		const noToken = setup({ settings: { readwiseToken: '' } })
-		expect(await noToken.lib.documents()).toBeNull()
+		const noToken = setup({ token: null })
+		await noToken.lib.sync()
 		expect(noToken.messages[0]).toMatch(/token is not set/)
 		const failing = setup({ routes: { 'GET /export/': () => ({ status: 500 }) } })
 		await failing.lib.importDocument(DOC)

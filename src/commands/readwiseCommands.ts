@@ -2,7 +2,7 @@ import type ZettelizerPlugin from '../main'
 import { noteRef, obsidianUi } from '../intake/obsidian'
 import { createLibrary, readwiseNoteInfo } from '../readwise/library'
 import { ImportModal } from '../readwise/ImportModal'
-import { obsidianHttp, readwiseVault } from '../readwise/obsidian'
+import { docCacheStore, obsidianHttp, readwiseVault } from '../readwise/obsidian'
 import { StatusModal } from '../readwise/StatusModal'
 
 export function registerReadwiseCommands(plugin: ZettelizerPlugin) {
@@ -11,16 +11,21 @@ export function registerReadwiseCommands(plugin: ZettelizerPlugin) {
 		vault: readwiseVault(plugin.app),
 		ui: obsidianUi(plugin),
 		settings: plugin.settings,
+		cache: docCacheStore(plugin.app, plugin.manifest.id),
+		getToken: () => plugin.app.secretStorage.getSecret(plugin.settings.readwiseTokenSecret),
 	})
 
 	plugin.addCommand({
 		id: 'import-readwise-document',
 		name: 'Import Readwise document',
-		callback: async () => {
-			const docs = await library.documents()
-			if (docs) new ImportModal(plugin.app, docs, (d) => void library.importDocument(d)).open()
+		callback: () => {
+			new ImportModal(plugin.app, library.subscribe, (d) => void library.importDocument(d)).open()
+			void library.sync()
 		},
 	})
+
+	// Warm the document list once the workspace is ready so the picker opens with it already loaded.
+	if (plugin.settings.syncOnStartup) plugin.app.workspace.onLayoutReady(() => void library.warm())
 
 	plugin.addCommand({
 		id: 'set-readwise-status',

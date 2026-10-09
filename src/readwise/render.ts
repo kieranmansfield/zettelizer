@@ -1,27 +1,48 @@
 import type { RwExport } from './library'
 
-const q = JSON.stringify // JSON strings are valid YAML double-quoted scalars
+// JSON strings are valid YAML double-quoted scalars (a wrapper: .map(JSON.stringify) would pass the index as `replacer`)
+const q = (s: string) => JSON.stringify(s)
 
-/** Renders an exported Readwise document to markdown matching the official plugin layout. */
-// fallow-ignore-next-line complexity -- no test harness in this plugin; thin API glue
-export function renderDocument(doc: RwExport): string {
+/** Readwise tag as an Obsidian tag: spaces become hyphens, anything but letters, digits, `_` and `-` is dropped. */
+const tagName = (s: string) => {
+	const name = s.trim().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}_-]/gu, '').replace(/^-+|-+$/g, '')
+	return /^\d+$/.test(name) ? `_${name}` : name // Obsidian rejects all-digit tags
+}
+
+const tagNames = (tags: { name: string }[] = []) => tags.map((t) => tagName(t.name)).filter(Boolean)
+
+const yamlList = (key: string, items: Iterable<string>) => {
+	const list = [...items]
+	return list.length ? [`${key}:`, ...list.map((i) => `  - ${i}`)] : []
+}
+
+/**
+ * Renders an exported Readwise document to markdown. Document tags go in `tags`; highlight tags
+ * stay with their highlight, inline on its block-id line.
+ * Highlight notes are written out verbatim.
+ */
+export function renderDocument(doc: RwExport, documentTags: string[], status: string): string {
 	const id = doc.user_book_id
-	const tags = new Set<string>()
-	for (const h of doc.highlights) for (const t of h.tags ?? []) tags.add(t.name)
 
-	const fm = ['---']
-	if (tags.size) fm.push('tags:', ...[...tags].map((t) => `  - keywords/${t}`))
-	fm.push(`title: ${q(doc.title)}`, `type: readwise-${doc.category}`, `status: process`)
-	if (doc.author) fm.push('authors:', `  - ${q(doc.author)}`)
-	fm.push(`id: ${q(String(id))}`)
-	if (doc.cover_image_url) fm.push(`image: ${q(doc.cover_image_url)}`)
-	fm.push('sources:')
-	if (doc.source_url) fm.push(`  - ${q(doc.source_url)}`)
-	fm.push(`  - ${q(`https://readwise.io/bookreview/${id}`)}`, '---', '', '# Highlights')
+	const fm = [
+		'---',
+		...yamlList('tags', documentTags.map(tagName).filter(Boolean)),
+		`title: ${q(doc.title)}`,
+		`type: readwise-${doc.category}`,
+		`status: ${status}`,
+		...(doc.author ? yamlList('authors', [q(doc.author)]) : []),
+		`id: ${q(String(id))}`,
+		...(doc.cover_image_url ? [`image: ${q(doc.cover_image_url)}`] : []),
+		...yamlList('sources', [doc.source_url, `https://readwise.io/bookreview/${id}`].filter((u): u is string => !!u).map(q)),
+		'---',
+		'',
+		'# Highlights',
+	]
 
 	const body = doc.highlights.map((h) => {
+		const inline = tagNames(h.tags).map((t) => ` #${t}`).join('')
 		const note = h.note ? `\n\n**Note:** ${h.note}` : ''
-		return `> <mark>${h.text.replace(/\n+/g, ' ')}</mark> ^${h.id}${note}\n\n\n---`
+		return `> <mark>${h.text.replace(/\n+/g, ' ')}</mark>${inline} ^${h.id}${note}\n\n\n---`
 	})
 	return [...fm, ...body, ''].join('\n')
 }
