@@ -1,6 +1,6 @@
 {
 	"name": "zettelizer",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Create zettelkasten notes from Readwise footnotes while leaving the original highlights untouched.",
 	"main": "main.js",
 	"scripts": {
