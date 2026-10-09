@@ -1,7 +1,5 @@
 import { FuzzySuggestModal, App } from 'obsidian'
-
-export const STATUSES = ['process', 'processing', 'processed']
-
+import { STATUSES } from './library'
 export class StatusModal extends FuzzySuggestModal<string> {
 	constructor(
 		app: App,

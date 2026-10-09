@@ -1,5 +1,5 @@
 import { FuzzySuggestModal, App } from 'obsidian'
-import type { RwDocument } from './api'
+import type { RwDocument } from './library'
 
 export class ImportModal extends FuzzySuggestModal<RwDocument> {
 	constructor(

@@ -1,4 +1,4 @@
-import type { RwExport } from './api'
+import type { RwExport } from './library'
 
 const q = (s: string) => `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
 
