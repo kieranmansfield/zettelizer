@@ -6,7 +6,7 @@ import type { NoteRef, UiPort, VaultPort } from './ports'
 
 export const noteRef = (f: TFile): NoteRef => ({ path: f.path, basename: f.basename })
 
-function fileAt(app: App, path: string): TFile {
+export function fileAt(app: App, path: string): TFile {
 	const f = app.vault.getAbstractFileByPath(path)
 	if (!(f instanceof TFile)) throw new Error(`Not a file: ${path}`)
 	return f

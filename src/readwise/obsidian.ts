@@ -1,5 +1,5 @@
 import { requestUrl, TFile, type App } from 'obsidian'
-import { noteRef } from '../intake/obsidian'
+import { fileAt, noteRef } from '../intake/obsidian'
 import type { HttpPort, LibraryVault } from './library'
 
 export const obsidianHttp: HttpPort = {
@@ -10,11 +10,6 @@ export const obsidianHttp: HttpPort = {
 }
 
 export function readwiseVault(app: App): LibraryVault {
-	const file = (path: string) => {
-		const f = app.vault.getAbstractFileByPath(path)
-		if (!(f instanceof TFile)) throw new Error(`Not a file: ${path}`)
-		return f
-	}
 	return {
 		exists: (path) => app.vault.adapter.exists(path),
 		createFolder: async (path) => void (await app.vault.createFolder(path)),
@@ -23,9 +18,9 @@ export function readwiseVault(app: App): LibraryVault {
 			return f instanceof TFile ? noteRef(f) : null
 		},
 		create: async (path, content) => noteRef(await app.vault.create(path, content)),
-		modify: (note, content) => app.vault.modify(file(note.path), content),
+		modify: (note, content) => app.vault.modify(fileAt(app, note.path), content),
 		setStatusProperty: (note, status) =>
-			app.fileManager.processFrontMatter(file(note.path), (fm: Record<string, unknown>) => {
+			app.fileManager.processFrontMatter(fileAt(app, note.path), (fm: Record<string, unknown>) => {
 				fm.status = status
 			}),
 	}

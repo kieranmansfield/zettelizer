@@ -1,17 +1,17 @@
 import type { RwExport } from './library'
 
-const q = (s: string) => `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+const q = JSON.stringify // JSON strings are valid YAML double-quoted scalars
 
 /** Renders an exported Readwise document to markdown matching the official plugin layout. */
 // fallow-ignore-next-line complexity -- no test harness in this plugin; thin API glue
-export function renderDocument(doc: RwExport, status = 'process'): string {
+export function renderDocument(doc: RwExport): string {
 	const id = doc.user_book_id
 	const tags = new Set<string>()
 	for (const h of doc.highlights) for (const t of h.tags ?? []) tags.add(t.name)
 
 	const fm = ['---']
 	if (tags.size) fm.push('tags:', ...[...tags].map((t) => `  - keywords/${t}`))
-	fm.push(`title: ${q(doc.title)}`, `type: readwise-${doc.category}`, `status: ${status}`)
+	fm.push(`title: ${q(doc.title)}`, `type: readwise-${doc.category}`, `status: process`)
 	if (doc.author) fm.push('authors:', `  - ${q(doc.author)}`)
 	fm.push(`id: ${q(String(id))}`)
 	if (doc.cover_image_url) fm.push(`image: ${q(doc.cover_image_url)}`)

@@ -1,3 +1,4 @@
+import type { ZettelizerSettings } from '../settings'
 import type { Highlight } from '../types'
 
 /** A note as the intake module sees it: no Obsidian types leak across the seam. */
@@ -39,12 +40,10 @@ export interface UiPort {
 	open(note: NoteRef): Promise<void>
 }
 
-export interface IntakeSettings {
-	zettelFolder: string
-	templatePath: string
-	timestampFormat: string
-	autoOpenAppendedNotes: boolean
-}
+export type IntakeSettings = Pick<
+	ZettelizerSettings,
+	'zettelFolder' | 'templatePath' | 'timestampFormat' | 'autoOpenAppendedNotes'
+>
 
 export interface IntakeDeps {
 	vault: VaultPort

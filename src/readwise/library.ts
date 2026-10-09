@@ -1,3 +1,4 @@
+import type { ZettelizerSettings } from '../settings'
 import type { NoteRef, UiPort } from '../intake/ports'
 import { renderDocument, safeName } from './render'
 
@@ -43,11 +44,7 @@ export interface LibraryVault {
 	setStatusProperty(note: NoteRef, status: string): Promise<void>
 }
 
-export interface LibrarySettings {
-	readwiseToken: string
-	readwiseFolder: string
-	skipExisting: boolean
-}
+export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseToken' | 'readwiseFolder' | 'skipExisting'>
 
 export interface LibraryDeps {
 	http: HttpPort

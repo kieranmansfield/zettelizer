@@ -2,7 +2,7 @@ import type { Highlight } from '../types'
 import { parseHighlightsFromContent } from '../utils/parser'
 import { blockLink, createTemplateVariables, processTemplate } from '../utils/template'
 import { generateTimestamp } from '../utils/timestamp'
-import type { Destination, IntakeDeps, Mode, NoteRef, TagMatch, TitledNote, VaultPort } from './ports'
+import type { Destination, IntakeDeps, Mode, NoteRef, TagMatch, TitledNote, UiPort, VaultPort } from './ports'
 
 type Outcome = { kind: 'created' | 'skipped' } | { kind: 'appended'; note: NoteRef }
 
@@ -26,12 +26,12 @@ async function freePath(vault: VaultPort, folder: string, format: string): Promi
 	return path
 }
 
-function zettelContent(source: NoteRef, blockId: string, text: string, template: string | null, notify: (m: string) => void) {
+function zettelContent(source: NoteRef, blockId: string, text: string, template: string | null, ui: UiPort) {
 	const fallback = blockLink(source, blockId)
 	if (!template) return fallback
 	const content = processTemplate(template, createTemplateVariables(text, source, blockId))
 	if (content.trim()) return content
-	notify('Warning: template produced empty content. Check template variables')
+	ui.notify('Warning: template produced empty content. Check template variables')
 	return fallback
 }
 
@@ -74,7 +74,7 @@ async function loadTemplate({ vault, ui, settings }: IntakeDeps): Promise<{ temp
 async function processHighlight(
 	source: NoteRef,
 	mode: Mode,
-	h: Highlight & { blockId: string },
+	h: Highlight,
 	template: string | null,
 	deps: IntakeDeps
 ): Promise<Outcome> {
@@ -83,7 +83,7 @@ async function processHighlight(
 	if (dest === null) return { kind: 'skipped' }
 	if (dest === 'new') {
 		const path = await freePath(vault, settings.zettelFolder, settings.timestampFormat)
-		await vault.create(path, zettelContent(source, h.blockId, h.text, template, ui.notify))
+		await vault.create(path, zettelContent(source, h.blockId, h.text, template, ui))
 		return { kind: 'created' }
 	}
 	await append(vault, dest, blockLink(source, h.blockId))
@@ -107,16 +107,15 @@ export async function intake(source: NoteRef, mode: Mode, deps: IntakeDeps): Pro
 	if (!context) return
 
 	const counts = { created: 0, appended: 0, skipped: 0 }
-	const appended: NoteRef[] = []
+	let firstAppended: NoteRef | undefined
 
 	// Sequential: each highlight may open a modal.
 	for (const h of selected) {
-		if (!h.blockId) continue
-		const outcome = await processHighlight(source, mode, { ...h, blockId: h.blockId }, context.template, deps)
+		const outcome = await processHighlight(source, mode, h, context.template, deps)
 		counts[outcome.kind]++
-		if (outcome.kind === 'appended') appended.push(outcome.note)
+		if (outcome.kind === 'appended') firstAppended ??= outcome.note
 	}
 
 	ui.notify(summarize(counts))
-	if (settings.autoOpenAppendedNotes && appended.length) await ui.open(appended[0])
+	if (settings.autoOpenAppendedNotes && firstAppended) await ui.open(firstAppended)
 }
