@@ -1,5 +1,6 @@
 import type ZettelizerPlugin from '../main'
-import { noteRef, obsidianUi } from '../intake/obsidian'
+import { intake } from '../intake/intake'
+import { noteRef, obsidianUi, obsidianVault } from '../intake/obsidian'
 import { createLibrary, readwiseNoteInfo } from '../readwise/library'
 import { ImportModal } from '../readwise/ImportModal'
 import { docCacheStore, obsidianHttp, readwiseVault } from '../readwise/obsidian'
@@ -20,6 +21,18 @@ export function registerReadwiseCommands(plugin: ZettelizerPlugin) {
 		name: 'Import Readwise document',
 		callback: () => {
 			new ImportModal(plugin.app, library.subscribe, (d) => void library.importDocument(d)).open()
+			void library.sync()
+		},
+	})
+
+	plugin.addCommand({
+		id: 'import-and-zettelize-readwise-document',
+		name: 'Import and zettelize Readwise document',
+		callback: () => {
+			new ImportModal(plugin.app, library.subscribe, async (d) => {
+				const note = await library.importDocument(d)
+				if (note) await intake(note, 'plain', { vault: obsidianVault(plugin.app), ui: obsidianUi(plugin), settings: plugin.settings })
+			}).open()
 			void library.sync()
 		},
 	})

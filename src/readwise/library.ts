@@ -199,13 +199,15 @@ export function createLibrary({ http, vault, ui, settings, getToken, cache }: Li
 		/** Same sync, but failures are silent: for background use. */
 		warm: () => runSync().catch(() => {}),
 
-		async importDocument(doc: RwDocument): Promise<void> {
-			await guarded(async () => {
+		/** Imports (or finds, with skipExisting) the document's note and opens it. Null on failure. */
+		async importDocument(doc: RwDocument): Promise<NoteRef | null> {
+			return guarded(async () => {
 				const path = `${settings.readwiseFolder}/${safeName(doc.title)} Highlights.md`
 				const existing = vault.find(path)
 				if (existing && settings.skipExisting) {
 					ui.notify('Note already exists, opening it.')
-					return ui.open(existing)
+					await ui.open(existing)
+					return existing
 				}
 				const data = await exportDocument(doc.id)
 				if (!data) throw new Error('Document not found in export.')
@@ -222,6 +224,7 @@ export function createLibrary({ http, vault, ui, settings, getToken, cache }: Li
 				else note = await vault.create(path, md)
 				ui.notify(`Imported "${doc.title}".`)
 				await ui.open(note)
+				return note
 			})
 		},
 
