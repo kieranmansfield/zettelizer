@@ -1,4 +1,4 @@
-import { FuzzySuggestModal, Notice, TFile, type App, type Modal } from 'obsidian'
+import { FuzzySuggestModal, Notice, TFile, type App } from 'obsidian'
 import { DestinationModal } from '../ui/DestinationModal'
 import { FuzzyHighlightModal } from '../ui/FuzzyHighlightModal'
 import type ZettelizerPlugin from '../main'
@@ -30,41 +30,19 @@ export function obsidianVault(app: App): VaultPort {
 	}
 }
 
-/** Opens `make`'s modal; resolves with the chosen value, or null if it closes without a choice. */
-function prompt<T>(make: (done: (v: T) => void) => Modal): Promise<T | null> {
-	return new Promise((resolve) => {
-		let settled = false
-		const done = (v: T | null) => {
-			if (settled) return
-			settled = true
-			resolve(v)
-		}
-		const modal = make(done)
-		const close = modal.close.bind(modal)
-		// Deferred: Obsidian closes the modal before it calls the choose callback.
-		modal.close = () => {
-			close()
-			setTimeout(() => done(null), 0)
-		}
-		modal.open()
-	})
-}
-
 export function obsidianUi(plugin: ZettelizerPlugin): UiPort {
 	const { app } = plugin
 	return {
 		selectHighlights: (highlights) =>
-			prompt((done) => new FuzzyHighlightModal(app, highlights, plugin.settings.truncateLength, done)),
-		chooseDestination: (highlight, matches) =>
-			prompt(
-				(done) =>
-					new DestinationModal(
-						app,
-						highlight,
-						matches.map((m) => ({ ...m, file: fileAt(app, m.note.path) })),
-						(d) => done(d === 'new' ? d : noteRef(d))
-					)
-			),
+			new FuzzyHighlightModal(app, highlights, plugin.settings.truncateLength).prompt(),
+		chooseDestination: async (highlight, matches) => {
+			const choice = await new DestinationModal(
+				app,
+				highlight,
+				matches.map((m) => ({ ...m, file: fileAt(app, m.note.path) }))
+			).prompt()
+			return choice instanceof TFile ? noteRef(choice) : choice
+		},
 		notify: (message) => void new Notice(message),
 		open: (note) => app.workspace.getLeaf(false).openFile(fileAt(app, note.path)),
 	}

@@ -1,4 +1,5 @@
-import { App, FuzzySuggestModal, FuzzyMatch } from "obsidian";
+import { App, FuzzyMatch } from "obsidian";
+import { PromptSuggestModal } from "./PromptSuggestModal";
 import { Highlight } from "../types";
 
 interface HighlightItem {
@@ -7,22 +8,19 @@ interface HighlightItem {
 	searchText: string;
 }
 
-export class FuzzyHighlightModal extends FuzzySuggestModal<HighlightItem> {
+export class FuzzyHighlightModal extends PromptSuggestModal<HighlightItem, Highlight[]> {
 	private highlights: Highlight[];
 	private selected: Set<string>;
-	private onChoose: (selected: Highlight[]) => void;
 	private truncateLength: number;
 
 	constructor(
 		app: App,
 		highlights: Highlight[],
-		truncateLength: number,
-		onChoose: (selected: Highlight[]) => void
+		truncateLength: number
 	) {
 		super(app);
 		this.highlights = highlights;
 		this.selected = new Set();
-		this.onChoose = onChoose;
 		this.truncateLength = truncateLength;
 
 		// Customize modal
@@ -60,7 +58,7 @@ export class FuzzyHighlightModal extends FuzzySuggestModal<HighlightItem> {
 		);
 
 		if (selectedHighlights.length > 0) {
-			this.onChoose(selectedHighlights);
+			this.answer(selectedHighlights);
 		}
 	}
 
@@ -179,7 +177,7 @@ export class FuzzyHighlightModal extends FuzzySuggestModal<HighlightItem> {
 			return;
 		}
 
-		this.onChoose(selectedHighlights);
+		this.answer(selectedHighlights);
 		this.close();
 	}
 }

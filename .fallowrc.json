@@ -9,6 +9,21 @@
 	],
 	"usedClassMembers": [
 		{
+			"extends": "PromptSuggestModal",
+			"members": [
+				"getItems",
+				"getItemText",
+				"onChooseItem",
+				"renderSuggestion",
+				"onOpen",
+				"onClose",
+				"icon",
+				"getSettingDefinitions",
+				"onload",
+				"onunload"
+			]
+		},
+		{
 			"extends": "FuzzySuggestModal",
 			"members": [
 				"getItems",

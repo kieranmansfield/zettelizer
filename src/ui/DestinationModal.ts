@@ -1,5 +1,8 @@
-import { App, FuzzySuggestModal, TFile } from 'obsidian'
+import { App, TFile } from 'obsidian'
+import { PromptSuggestModal } from './PromptSuggestModal'
 import { Highlight } from '../types'
+
+type DestinationChoice = 'new' | TFile
 
 export interface MatchedNote {
 	file: TFile
@@ -15,21 +18,18 @@ interface DestinationOption {
 	matchingTags?: string[]
 }
 
-export class DestinationModal extends FuzzySuggestModal<DestinationOption> {
+export class DestinationModal extends PromptSuggestModal<DestinationOption, DestinationChoice> {
 	private highlight: Highlight
 	private matchedNotes: MatchedNote[]
-	private onChoose: (destination: 'new' | TFile) => void
 
 	constructor(
 		app: App,
 		highlight: Highlight,
-		matchedNotes: MatchedNote[],
-		onChoose: (destination: 'new' | TFile) => void
+		matchedNotes: MatchedNote[]
 	) {
 		super(app)
 		this.highlight = highlight
 		this.matchedNotes = matchedNotes
-		this.onChoose = onChoose
 
 		// Customize modal
 		this.setPlaceholder('Search to filter notes (Esc to cancel)')
@@ -74,9 +74,9 @@ export class DestinationModal extends FuzzySuggestModal<DestinationOption> {
 
 	onChooseItem(item: DestinationOption): void {
 		if (item.type === 'new') {
-			this.onChoose('new')
+			this.answer('new')
 		} else if (item.file) {
-			this.onChoose(item.file)
+			this.answer(item.file)
 		}
 		this.close()
 	}
