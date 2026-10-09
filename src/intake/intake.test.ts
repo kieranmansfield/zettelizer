@@ -88,6 +88,12 @@ describe('intake', () => {
 		expect(t.files[t.zettels()[0]]).toBe('hi / ![[Book#^a1]]')
 	})
 
+	it('strips <mark> tags from rendered Readwise highlights', async () => {
+		const t = setup({ files: { 'Readwise/Book.md': '> <mark>hi there</mark> ^a1\n', 'T.md': '{{highlight}}' }, settings: { templatePath: 'T.md' } })
+		await t.run('plain')
+		expect(t.files[t.zettels()[0]]).toBe('hi there')
+	})
+
 	it('reports a missing zettel folder and a note without highlights', async () => {
 		const missing = setup({ files: { 'Readwise/Book.md': TWO }, settings: { zettelFolder: 'Nope' } })
 		await missing.run('plain')

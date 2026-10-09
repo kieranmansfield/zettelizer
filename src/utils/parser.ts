@@ -32,7 +32,7 @@ function cleanLine(line: string, isLast: boolean): string {
 	let text = line
 	if (text.trim().startsWith('>')) text = text.replace(/^\s*>\s?/, '')
 	if (isLast) text = text.replace(BLOCK_ID_REGEX, '')
-	return text.replace(/==/g, '').replace(/\*\*/g, '').replace(/__/g, '').trim()
+	return text.replace(/<\/?mark>/g, '').replace(/==/g, '').replace(/\*\*/g, '').replace(/__/g, '').trim()
 }
 
 function parseHighlightAt(lines: string[], index: number): Highlight | null {
