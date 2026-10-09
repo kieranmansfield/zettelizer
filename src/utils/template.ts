@@ -25,15 +25,10 @@ export function processTemplate(
 	template: string,
 	variables: TemplateVariables
 ): string {
-	let result = template;
-
-	// Replace all variables
-	(Object.entries(variables) as [keyof TemplateVariables, string][]).forEach(([key, value]) => {
-		const regex = new RegExp(`{{${key}}}`, "g");
-		result = result.replace(regex, value);
-	});
-
-	return result;
+	// Single pass: values are inserted verbatim and never re-scanned for placeholders.
+	return template.replace(/{{(\w+)}}/g, (match, key: string) =>
+		Object.prototype.hasOwnProperty.call(variables, key) ? variables[key as keyof TemplateVariables] : match
+	);
 }
 
 /**

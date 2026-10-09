@@ -59,7 +59,7 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 				items: [
 					{
 						name: 'Timestamp format',
-						desc: 'Format for zettel filenames',
+						desc: 'Format for zettel filenames. Tokens: YYYY MM DD HH mm ss SSS. Leave empty for YYYYMMDDHHmmssSSS.',
 						control: {
 							type: 'text',
 							key: 'timestampFormat',
@@ -74,11 +74,6 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 							key: 'templatePath',
 							placeholder: 'Templates/Zettel Template.md',
 						},
-					},
-					{
-						name: 'Source property name',
-						desc: "Name of the frontmatter property for source backlinks (e.g., 'sources', 'from', 'references')",
-						control: { type: 'text', key: 'sourceProperty', placeholder: 'Example: sources' },
 					},
 				],
 			},

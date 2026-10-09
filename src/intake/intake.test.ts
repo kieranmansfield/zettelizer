@@ -4,7 +4,7 @@ import type { Destination, IntakeSettings, NoteRef, TitledNote, UiPort, VaultPor
 import type { Highlight } from '../types'
 
 const SOURCE: NoteRef = { path: 'Readwise/Book.md', basename: 'Book' }
-const settings: IntakeSettings = { zettelFolder: 'Z', templatePath: '', autoOpenAppendedNotes: true }
+const settings: IntakeSettings = { zettelFolder: 'Z', templatePath: '', timestampFormat: '', autoOpenAppendedNotes: true }
 
 function setup(opts: {
 	files?: Record<string, string>
@@ -44,6 +44,19 @@ describe('intake', () => {
 		expect(t.zettels()).toHaveLength(2)
 		expect(t.files[t.zettels()[0]]).toMatch(/^!\[\[Book#\^a\d\]\]$/)
 		expect(t.messages).toEqual(['Created 2 zettel(s).'])
+	})
+
+	it('names zettels with timestampFormat and suffixes taken names', async () => {
+		const t = setup({ files: { 'Readwise/Book.md': TWO }, settings: { timestampFormat: 'YYYY' } })
+		await t.run('plain')
+		const year = String(new Date().getFullYear())
+		expect(t.zettels().sort()).toEqual([`Z/${year}-2.md`, `Z/${year}.md`])
+	})
+
+	it('inserts highlight text verbatim in templates', async () => {
+		const t = setup({ files: { 'Readwise/Book.md': '> costs $& {{link}} ^a1\n', 'T.md': '{{highlight}}' }, settings: { templatePath: 'T.md' } })
+		await t.run('plain')
+		expect(t.files[t.zettels()[0]]).toBe('costs $& {{link}}')
 	})
 
 	it('smart mode appends to a tag-matched note and opens it', async () => {

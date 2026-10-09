@@ -42,6 +42,7 @@ export interface UiPort {
 export interface IntakeSettings {
 	zettelFolder: string
 	templatePath: string
+	timestampFormat: string
 	autoOpenAppendedNotes: boolean
 }
 

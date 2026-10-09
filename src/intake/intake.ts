@@ -18,11 +18,11 @@ function matchNotes(notes: TitledNote[], tags: string[]): TagMatch[] {
 		.sort((a, b) => b.matchPercentage - a.matchPercentage)
 }
 
-/** Timestamp path that is free in the vault; bumps by 1 ms on collision. */
-async function freePath(vault: VaultPort, folder: string): Promise<string> {
-	let ms = Date.now()
-	let path = `${folder}/${generateTimestamp(new Date(ms))}.md`
-	while (await vault.exists(path)) path = `${folder}/${generateTimestamp(new Date(++ms))}.md`
+/** Timestamp path that is free in the vault; a taken name gets a -2, -3, … suffix. */
+async function freePath(vault: VaultPort, folder: string, format: string): Promise<string> {
+	const base = `${folder}/${generateTimestamp(new Date(), format)}`
+	let path = `${base}.md`
+	for (let n = 2; await vault.exists(path); n++) path = `${base}-${n}.md`
 	return path
 }
 
@@ -82,7 +82,7 @@ async function processHighlight(
 	const dest = await destinationFor(deps, mode, h)
 	if (dest === null) return { kind: 'skipped' }
 	if (dest === 'new') {
-		const path = await freePath(vault, settings.zettelFolder)
+		const path = await freePath(vault, settings.zettelFolder, settings.timestampFormat)
 		await vault.create(path, zettelContent(source, h.blockId, h.text, template, ui.notify))
 		return { kind: 'created' }
 	}

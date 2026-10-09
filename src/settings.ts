@@ -4,7 +4,6 @@ export interface ZettelizerSettings {
 	timestampFormat: string
 	truncateLength: number
 	templatePath: string
-	sourceProperty: string
 	autoOpenAppendedNotes: boolean
 	readwiseToken: string
 	skipExisting: boolean
@@ -16,7 +15,6 @@ export const DEFAULT_SETTINGS: ZettelizerSettings = {
 	timestampFormat: 'YYYYMMDDHHmmssSSS',
 	truncateLength: 100,
 	templatePath: '',
-	sourceProperty: 'sources',
 	autoOpenAppendedNotes: true,
 	readwiseToken: '',
 	skipExisting: true,
