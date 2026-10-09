@@ -1,6 +1,11 @@
 import { App, FuzzySuggestModal, TFile } from 'obsidian'
 import { Highlight } from '../types'
-import { MatchedNote } from '../utils/noteMatcher'
+
+export interface MatchedNote {
+	file: TFile
+	matchPercentage: number
+	matchingTags: string[]
+}
 
 interface DestinationOption {
 	type: 'new' | 'existing'

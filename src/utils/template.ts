@@ -1,4 +1,7 @@
-import { TFile } from "obsidian";
+import type { NoteRef } from "../intake/ports";
+
+/** Block transclusion of a Highlight in its Source note. */
+export const blockLink = (source: NoteRef, blockId: string) => `![[${source.basename}#^${blockId}]]`;
 
 export interface TemplateVariables {
 	highlight: string;
@@ -42,7 +45,7 @@ export function processTemplate(
  */
 export function createTemplateVariables(
 	highlightText: string,
-	sourceFile: TFile,
+	sourceFile: NoteRef,
 	blockId: string
 ): TemplateVariables {
 	const now = new Date();
@@ -59,9 +62,9 @@ export function createTemplateVariables(
 	return {
 		highlight: highlightText,
 		source: sourceFile.basename,
-		sourceFile: sourceFile.name,
+		sourceFile: sourceFile.path.split("/").pop() ?? sourceFile.path,
 		blockId: blockId,
-		link: `![[${sourceFile.basename}#^${blockId}]]`,
+		link: blockLink(sourceFile, blockId),
 		sourceBlock: `[[${sourceFile.basename}#^${blockId}]]`,
 		date: date,
 		time: time,

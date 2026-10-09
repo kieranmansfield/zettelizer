@@ -1,4 +1,4 @@
-import { Highlight } from '../types'
+import type { Highlight } from '../types'
 
 // Matches a block ID (^blockid) at the end of a line
 const BLOCK_ID_REGEX = /\s*\^([\w-]+)\s*$/
