@@ -66,3 +66,16 @@ export function createTemplateVariables(
 		title: title,
 	};
 }
+
+/** Stock zettel template, written to the vault by "Create stock zettel template". */
+export const STOCK_TEMPLATE = `---
+created: {{date}}
+sources:
+  - {{sourceBlock}}
+title: {{title}}
+---
+
+{{highlight}}
+
+---
+tags: #zettel`;

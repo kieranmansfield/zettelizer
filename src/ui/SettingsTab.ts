@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, SettingDefinitionItem } from 'obsidian'
 import type ZettelizerPlugin from '../main'
+import { createStockTemplate } from '../commands/createTemplate'
 import { DEFAULT_HIGHLIGHT_TEMPLATE, DEFAULT_NOTE_TEMPLATE } from '../readwise/render'
 
 const TEMPLATE_VARIABLES: [string, string][] = [
@@ -37,18 +38,6 @@ const variableList = (vars: [string, string][]) => ({
 		for (const [name, text] of vars) list.createEl('li', { text: `${name} - ${text}` })
 	},
 })
-
-const EXAMPLE_TEMPLATE = `---
-created: {{date}}
-sources:
-  - {{sourceBlock}}
-title: {{title}}
----
-
-{{highlight}}
-
----
-tags: #zettel`
 
 export default class ZettelizerSettingTab extends PluginSettingTab {
 	icon = 'inbox'
@@ -93,12 +82,17 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 					},
 					{
 						name: 'Zettel template',
-						desc: 'Path to template file for new zettels (optional). Leave empty to use default format.',
+						desc: 'Path to template file for new zettels. Leave empty to use the stock template.',
 						control: {
 							type: 'file',
 							key: 'templatePath',
 							placeholder: 'Templates/Zettel Template.md',
 						},
+					},
+					{
+						name: 'Create stock template',
+						desc: 'Write the stock zettel template to Templates/Zettel Template.md so you can edit it, and use that file. An existing file is kept.',
+						action: () => void createStockTemplate(this.plugin).then(() => this.update()),
 					},
 				],
 			},
@@ -182,12 +176,6 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 							for (const [name, text] of TEMPLATE_VARIABLES) {
 								list.createEl('li', { text: `${name} - ${text}` })
 							}
-						},
-					},
-					{
-						name: 'Example template',
-						render: (setting) => {
-							setting.descEl.createEl('pre').createEl('code', { text: EXAMPLE_TEMPLATE })
 						},
 					},
 				],

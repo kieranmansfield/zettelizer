@@ -42,7 +42,7 @@ describe('intake', () => {
 		const t = setup({ files: { 'Readwise/Book.md': TWO } })
 		await t.run('plain')
 		expect(t.zettels()).toHaveLength(2)
-		expect(t.files[t.zettels()[0]]).toMatch(/^!\[\[Book#\^a\d\]\]$/)
+		expect(t.files[t.zettels()[0]]).toContain('  - [[Book#^a1]]')
 		expect(t.messages).toEqual(['Created 2 zettel(s).'])
 	})
 

@@ -1,6 +1,6 @@
 import type { Highlight } from '../types'
 import { parseHighlightsFromContent } from '../utils/parser'
-import { blockLink, createTemplateVariables, processTemplate } from '../utils/template'
+import { STOCK_TEMPLATE, blockLink, createTemplateVariables, processTemplate } from '../utils/template'
 import { generateTimestamp } from '../utils/timestamp'
 import type { Destination, IntakeDeps, Mode, NoteRef, TagMatch, TitledNote, UiPort, VaultPort } from './ports'
 
@@ -65,7 +65,7 @@ async function loadTemplate({ vault, ui, settings }: IntakeDeps): Promise<{ temp
 		ui.notify(`Zettel folder "${settings.zettelFolder}" does not exist. Please create it or update settings.`)
 		return null
 	}
-	if (!settings.templatePath) return { template: null }
+	if (!settings.templatePath) return { template: STOCK_TEMPLATE }
 	const template = await vault.readTemplate(settings.templatePath)
 	if (template === null) ui.notify(`Template file not found: ${settings.templatePath}`)
 	return { template }
