@@ -59,7 +59,7 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 				items: [
 					{
 						name: 'Timestamp format',
-						desc: 'Format for zettel filenames',
+						desc: 'Format for zettel filenames. Tokens: YYYY MM DD HH mm ss SSS. Leave empty for YYYYMMDDHHmmssSSS.',
 						control: {
 							type: 'text',
 							key: 'timestampFormat',
@@ -74,11 +74,6 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 							key: 'templatePath',
 							placeholder: 'Templates/Zettel Template.md',
 						},
-					},
-					{
-						name: 'Source property name',
-						desc: "Name of the frontmatter property for source backlinks (e.g., 'sources', 'from', 'references')",
-						control: { type: 'text', key: 'sourceProperty', placeholder: 'Example: sources' },
 					},
 				],
 			},
@@ -95,6 +90,27 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 						name: 'Auto-open appended notes',
 						desc: 'Automatically open notes after appending highlights (smart match feature)',
 						control: { type: 'toggle', key: 'autoOpenAppendedNotes' },
+					},
+				],
+			},
+			{
+				type: 'group',
+				heading: 'Readwise import',
+				items: [
+					{
+						name: 'Readwise API token',
+						desc: 'Used only to call readwise.io when you run the import and status commands. Kept in Obsidian\'s secret storage, not in this plugin\'s data.json.',
+						control: { type: 'secret', key: 'readwiseTokenSecret' },
+					},
+					{
+						name: 'Sync document list on startup',
+						desc: 'When Obsidian starts, fetch your Readwise document list in the background (sends your token to readwise.io) so the import picker opens instantly. Needs a restart to apply.',
+						control: { type: 'toggle', key: 'syncOnStartup' },
+					},
+					{
+						name: 'Skip existing notes',
+						desc: 'Open an already-imported note instead of overwriting it',
+						control: { type: 'toggle', key: 'skipExisting' },
 					},
 				],
 			},

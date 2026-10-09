@@ -1,8 +1,8 @@
 import type ZettelizerPlugin from '../main'
-import { registerZettelizeCommand } from './zettelizeCommand'
-import { registerSmartMatchCommand } from './smartMatchCommand'
+import { registerIntakeCommands } from './intakeCommands'
+import { registerReadwiseCommands } from './readwiseCommands'
 
 export function registerCommands(plugin: ZettelizerPlugin) {
-	registerZettelizeCommand(plugin)
-	registerSmartMatchCommand(plugin)
+	registerIntakeCommands(plugin)
+	registerReadwiseCommands(plugin)
 }

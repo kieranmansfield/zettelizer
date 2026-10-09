@@ -4,9 +4,25 @@
 		"tslib",
 		"@typescript-eslint/eslint-plugin",
 		"@eslint/js",
-		"typescript-eslint"
+		"typescript-eslint",
+		"obsidian"
 	],
 	"usedClassMembers": [
+		{
+			"extends": "PromptSuggestModal",
+			"members": [
+				"getItems",
+				"getItemText",
+				"onChooseItem",
+				"renderSuggestion",
+				"onOpen",
+				"onClose",
+				"icon",
+				"getSettingDefinitions",
+				"onload",
+				"onunload"
+			]
+		},
 		{
 			"extends": "FuzzySuggestModal",
 			"members": [

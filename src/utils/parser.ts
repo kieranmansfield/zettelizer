@@ -1,7 +1,10 @@
-import { Highlight } from '../types'
+import type { Highlight } from '../types'
 
 // Matches a block ID (^blockid) at the end of a line
 const BLOCK_ID_REGEX = /\s*\^([\w-]+)\s*$/
+
+// Matches the run of inline #tags that sits just before the block ID
+const TRAILING_TAGS_REGEX = /(\s+#[\w-]+)+\s*$/
 
 /** Tags are case-insensitive, so they are normalized to lowercase. */
 function extractTags(line: string): string[] {
@@ -31,8 +34,8 @@ function findBlockStart(lines: string[], endIndex: number): number {
 function cleanLine(line: string, isLast: boolean): string {
 	let text = line
 	if (text.trim().startsWith('>')) text = text.replace(/^\s*>\s?/, '')
-	if (isLast) text = text.replace(BLOCK_ID_REGEX, '')
-	return text.replace(/==/g, '').replace(/\*\*/g, '').replace(/__/g, '').trim()
+	if (isLast) text = text.replace(BLOCK_ID_REGEX, '').replace(TRAILING_TAGS_REGEX, '')
+	return text.replace(/<\/?mark>/g, '').replace(/==/g, '').replace(/\*\*/g, '').replace(/__/g, '').trim()
 }
 
 function parseHighlightAt(lines: string[], index: number): Highlight | null {

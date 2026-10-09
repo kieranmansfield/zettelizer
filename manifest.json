@@ -2,7 +2,7 @@
 	"id": "zettelizer",
 	"name": "Zettelizer",
 	"version": "0.1.0",
-	"minAppVersion": "1.13.0",
+	"minAppVersion": "1.13.2",
 	"description": "Create zettelkasten notes from Readwise footnotes while leaving the original highlights untouched.",
 	"author": "Kieran Mansfield",
 	"authorUrl": "https://kieranmansfield.com",

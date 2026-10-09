@@ -11,7 +11,8 @@
 		"lint": "eslint --fix",
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --config prettier.config.cjs --ignore-path .prettierignore --write .",
-		"format:check": "prettier --config prettier.config.cjs --ignore-path .prettierignore --check ."
+		"format:check": "prettier --config prettier.config.cjs --ignore-path .prettierignore --check .",
+		"test": "vitest run"
 	},
 	"keywords": [],
 	"author": "",
@@ -22,11 +23,13 @@
 		"@typescript-eslint/parser": "8.71.1",
 		"builtin-modules": "5.4.0",
 		"esbuild": "0.28.2",
-		"eslint": "^9.39.2",
+		"eslint": "^9.39.5",
 		"eslint-plugin-obsidianmd": "^0.4.2",
 		"obsidian": "^1.14.4",
 		"prettier": "^3.9.9",
 		"tslib": "2.8.1",
-		"typescript": "5.9.3"
-	}
+		"typescript": "5.9.3",
+		"vitest": "^5.0.3"
+	},
+	"packageManager": "pnpm@11.21.0"
 }
