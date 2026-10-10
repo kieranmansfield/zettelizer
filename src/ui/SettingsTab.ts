@@ -137,6 +137,11 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 						control: { type: 'text', key: 'readwiseFilenameTemplate', placeholder: '{{title}} by {{author}} highlights' },
 					},
 					{
+						name: 'Include private source links',
+						desc: 'Documents you uploaded to Reader (EPUB, PDF) have a private:// source link that cannot be opened. Turn off to leave it out of the sources property.',
+						control: { type: 'toggle', key: 'readwisePrivateSources' },
+					},
+					{
 						type: 'page',
 						name: 'Export template',
 						desc: 'Customise how imported Readwise notes are written.',

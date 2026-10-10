@@ -66,7 +66,7 @@ export interface LibraryVault {
 	setStatusProperty(note: NoteRef, status: string): Promise<void>
 }
 
-export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting' | 'readwiseNoteTemplate' | 'readwiseHighlightTemplate' | 'readwiseFilenameTemplate'>
+export type LibrarySettings = Pick<ZettelizerSettings, 'readwiseFolder' | 'skipExisting' | 'readwiseNoteTemplate' | 'readwiseHighlightTemplate' | 'readwiseFilenameTemplate' | 'readwisePrivateSources'>
 
 export interface LibraryDeps {
 	http: HttpPort
@@ -92,6 +92,7 @@ function renderExport(data: RwExport, settings: LibrarySettings): string {
 	return renderDocument(data, bookTags.filter((t) => !STATUSES.includes(t)), status, {
 		note: settings.readwiseNoteTemplate,
 		highlight: settings.readwiseHighlightTemplate,
+		privateSources: settings.readwisePrivateSources,
 	})
 }
 

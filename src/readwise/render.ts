@@ -53,7 +53,7 @@ export function renderDocument(
 	doc: RwExport,
 	documentTags: string[],
 	status: string,
-	templates: { note?: string; highlight?: string } = {}
+	templates: { note?: string; highlight?: string; privateSources?: boolean } = {}
 ): string {
 	const id = doc.user_book_id
 
@@ -67,7 +67,9 @@ export function renderDocument(
 		})
 	)
 
-	const sources = [doc.source_url, `https://readwise.io/bookreview/${id}`].filter((u): u is string => !!u)
+	const sources = [doc.source_url, `https://readwise.io/bookreview/${id}`].filter(
+		(u): u is string => !!u && (templates.privateSources !== false || !u.startsWith('private://'))
+	)
 	return fill(templates.note || DEFAULT_NOTE_TEMPLATE, {
 		title: q(doc.title),
 		author: doc.author ?? '',

@@ -13,6 +13,8 @@ export interface ZettelizerSettings {
 	readwiseNoteTemplate: string
 	readwiseHighlightTemplate: string
 	readwiseFilenameTemplate: string
+	/** Whether `private://` source URLs (uploaded Reader documents) are written to `sources`. */
+	readwisePrivateSources: boolean
 }
 
 export const DEFAULT_SETTINGS: ZettelizerSettings = {
@@ -28,6 +30,7 @@ export const DEFAULT_SETTINGS: ZettelizerSettings = {
 	readwiseNoteTemplate: '',
 	readwiseHighlightTemplate: '',
 	readwiseFilenameTemplate: '',
+	readwisePrivateSources: true,
 }
 
 const LEGACY_SECRET_ID = 'zettelizer-readwise-token'

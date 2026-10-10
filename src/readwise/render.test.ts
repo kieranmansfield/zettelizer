@@ -16,4 +16,12 @@ describe('renderDocument templates', () => {
 		const md = renderDocument({ ...doc, title: '{{status}}' }, [], 'process', { note: '{{title}}' })
 		expect(md).toBe('"{{status}}"')
 	})
+
+	it('leaves private:// sources out when asked', () => {
+		const d = { ...doc, source_url: 'private://read/abc' }
+		expect(renderDocument(d, [], 'process')).toContain('private://read/abc')
+		const md = renderDocument(d, [], 'process', { privateSources: false })
+		expect(md).not.toContain('private://')
+		expect(md).toContain('readwise.io/bookreview/7')
+	})
 })
