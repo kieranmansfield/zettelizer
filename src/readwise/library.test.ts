@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createLibrary, readwiseNoteInfo, type DocCache, type LibrarySettings, type RwDocument } from './library'
+import { createLibrary, isReadwiseNoteFor, readwiseNoteInfo, type DocCache, type LibrarySettings, type RwDocument } from './library'
 import type { NoteRef } from '../intake/ports'
 import { parseHighlightsFromContent } from '../utils/parser'
 
@@ -194,5 +194,14 @@ describe('readwiseNoteInfo', () => {
 		})
 		await t.lib.importDocument(DOC)
 		expect(Object.keys(t.files)).toEqual(['Readwise/A - My Book.md'])
+	})
+})
+
+describe('isReadwiseNoteFor', () => {
+	it('matches by id for readwise-typed notes anywhere, and retyped notes inside the folder', () => {
+		expect(isReadwiseNoteFor(7, { id: '7', type: 'readwise-books' }, 'Elsewhere/a.md', 'RW')).toBe(true)
+		expect(isReadwiseNoteFor(7, { id: '7', type: 'reference' }, 'RW/a.md', 'RW')).toBe(true)
+		expect(isReadwiseNoteFor(7, { id: '7', type: 'reference' }, 'Elsewhere/a.md', 'RW')).toBe(false)
+		expect(isReadwiseNoteFor(7, { id: '8', type: 'readwise-books' }, 'RW/a.md', 'RW')).toBe(false)
 	})
 })

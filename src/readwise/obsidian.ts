@@ -1,6 +1,6 @@
 import { requestUrl, TFile, type App } from 'obsidian'
 import { fileAt, noteRef } from '../intake/obsidian'
-import { readwiseNoteInfo, type DocCacheStore, type HttpPort, type LibraryVault } from './library'
+import { isReadwiseNoteFor, type DocCacheStore, type HttpPort, type LibraryVault } from './library'
 
 export const obsidianHttp: HttpPort = {
 	async request(req) {
@@ -9,7 +9,7 @@ export const obsidianHttp: HttpPort = {
 	},
 }
 
-export function readwiseVault(app: App): LibraryVault {
+export function readwiseVault(app: App, folder: () => string): LibraryVault {
 	return {
 		exists: (path) => app.vault.adapter.exists(path),
 		createFolder: async (path) => void (await app.vault.createFolder(path)),
@@ -18,7 +18,7 @@ export function readwiseVault(app: App): LibraryVault {
 			return f instanceof TFile ? noteRef(f) : null
 		},
 		findByReadwiseId: (id) => {
-			const f = app.vault.getMarkdownFiles().find((f) => readwiseNoteInfo(app.metadataCache.getFileCache(f)?.frontmatter)?.id === id)
+			const f = app.vault.getMarkdownFiles().find((f) => isReadwiseNoteFor(id, app.metadataCache.getFileCache(f)?.frontmatter, f.path, folder()))
 			return f ? noteRef(f) : null
 		},
 		create: async (path, content) => noteRef(await app.vault.create(path, content)),

@@ -9,7 +9,7 @@ import { StatusModal } from '../readwise/StatusModal'
 export function registerReadwiseCommands(plugin: ZettelizerPlugin) {
 	const library = createLibrary({
 		http: obsidianHttp,
-		vault: readwiseVault(plugin.app),
+		vault: readwiseVault(plugin.app, () => plugin.settings.readwiseFolder),
 		ui: obsidianUi(plugin),
 		settings: plugin.settings,
 		cache: docCacheStore(plugin.app, plugin.manifest.id),

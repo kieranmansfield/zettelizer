@@ -96,6 +96,15 @@ function renderExport(data: RwExport, settings: LibrarySettings): string {
 }
 
 /**
+ * Whether a note is the import of Readwise document `id`: same `id` property, and either typed `readwise-*`
+ * or kept in the Readwise folder (notes there are often retyped, e.g. `type: reference`, after import).
+ */
+export function isReadwiseNoteFor(id: number, fm: Record<string, unknown> | undefined, path: string, folder: string): boolean {
+	if (Number(fm?.id) !== id) return false
+	return String(fm?.type ?? '').startsWith('readwise-') || path.startsWith(`${folder}/`)
+}
+
+/**
  * Readwise library: lists documents (cached on disk, refreshed incrementally), imports one into the vault,
  * and syncs its status tag to Readwise and the note. Failures surface as notices.
  */
