@@ -31,7 +31,8 @@ export function registerReadwiseCommands(plugin: ZettelizerPlugin) {
 		callback: () => {
 			new ImportModal(plugin.app, library.subscribe, async (d) => {
 				const note = await library.importDocument(d)
-				if (note) await intake(note, 'plain', { vault: obsidianVault(plugin.app), ui: obsidianUi(plugin), settings: plugin.settings })
+				// No picker: every highlight becomes a zettel.
+				if (note) await intake(note, 'plain', { vault: obsidianVault(plugin.app), ui: { ...obsidianUi(plugin), selectHighlights: async (all) => all }, settings: plugin.settings })
 			}).open()
 			void library.sync()
 		},
