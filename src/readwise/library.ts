@@ -209,8 +209,9 @@ export function createLibrary({ http, vault, ui, settings, getToken, cache }: Li
 
 	/** Note path from the filename template; a name taken by another document gets the id prepended. */
 	function freePath(doc: RwDocument): string {
+		const template = settings.readwiseFilenameTemplate || DEFAULT_FILENAME_TEMPLATE
 		const name = safeName(
-			fill(settings.readwiseFilenameTemplate || (doc.author ? DEFAULT_FILENAME_TEMPLATE : DEFAULT_FILENAME_TEMPLATE_NO_AUTHOR), {
+			fill(!doc.author && template === DEFAULT_FILENAME_TEMPLATE ? DEFAULT_FILENAME_TEMPLATE_NO_AUTHOR : template, {
 				title: doc.title,
 				author: doc.author ?? '',
 				category: doc.category,

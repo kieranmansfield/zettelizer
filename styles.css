@@ -89,3 +89,22 @@
 	border-left: 3px solid var(--interactive-accent);
 	padding-left: 9px;
 }
+
+/* Template editors: label and description above, editor across the full width */
+.setting-item.zettelizer-stacked {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+}
+
+.zettelizer-stacked .setting-item-control {
+	justify-content: stretch;
+	align-items: flex-start;
+}
+
+.zettelizer-stacked textarea {
+	width: 100%;
+	font-family: var(--font-monospace);
+	font-size: var(--font-smaller);
+	resize: vertical;
+}

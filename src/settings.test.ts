@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SETTINGS, migrateLegacyToken } from './settings'
+import { DEFAULT_SETTINGS, fillEmptyTemplates, migrateLegacyToken } from './settings'
 
 describe('migrateLegacyToken', () => {
 	const run = (extra: Record<string, unknown>) => {
@@ -25,5 +25,14 @@ describe('migrateLegacyToken', () => {
 
 	it('does nothing when there is no legacy token', () => {
 		expect(run({}).changed).toBe(false)
+	})
+})
+
+describe('fillEmptyTemplates', () => {
+	it('restores defaults for emptied templates and keeps edited ones', () => {
+		const s = { ...DEFAULT_SETTINGS, readwiseNoteTemplate: '', readwiseFilenameTemplate: 'mine' }
+		fillEmptyTemplates(s)
+		expect(s.readwiseNoteTemplate).toBe(DEFAULT_SETTINGS.readwiseNoteTemplate)
+		expect(s.readwiseFilenameTemplate).toBe('mine')
 	})
 })

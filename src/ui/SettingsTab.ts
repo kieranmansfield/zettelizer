@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, SettingDefinitionItem } from 'obsidian'
+import { App, PluginSettingTab, type Setting, type SettingDefinitionItem } from 'obsidian'
 import type ZettelizerPlugin from '../main'
 import { createStockTemplate } from '../commands/createTemplate'
 import { DEFAULT_HIGHLIGHT_TEMPLATE, DEFAULT_NOTE_TEMPLATE } from '../readwise/render'
@@ -47,6 +47,37 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 		public plugin: ZettelizerPlugin
 	) {
 		super(app, plugin)
+	}
+
+	/** A full-width template editor with its label above it and a reset-to-default button. */
+	private templateField(
+		name: string,
+		desc: string,
+		key: 'readwiseNoteTemplate' | 'readwiseHighlightTemplate',
+		fallback: string,
+		rows: number
+	) {
+		return {
+			name,
+			desc,
+			render: (setting: Setting) => {
+				setting.settingEl.addClass('zettelizer-stacked')
+				setting.addTextArea((t) => {
+					t.inputEl.rows = rows
+					t.setValue(this.plugin.settings[key]).onChange(async (v) => {
+						this.plugin.settings[key] = v
+						await this.plugin.saveSettings()
+					})
+					setting.addExtraButton((b) =>
+						b.setIcon('rotate-ccw').setTooltip('Reset to default').onClick(async () => {
+							t.setValue(fallback)
+							this.plugin.settings[key] = fallback
+							await this.plugin.saveSettings()
+						})
+					)
+				})
+			},
+		}
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
@@ -133,7 +164,7 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 					},
 					{
 						name: 'File name template',
-						desc: 'Name of imported notes. Variables: {{title}}, {{author}}, {{category}}, {{id}}. Leave empty for "{{title}} by {{author}} highlights". A name already used by another document gets its id added in front.',
+						desc: 'Name of imported notes. Variables: {{title}}, {{author}}, {{category}}, {{id}}. With no author, the default drops "by {{author}}". Emptied, it falls back to the default. A name already used by another document gets its id added in front.',
 						control: { type: 'text', key: 'readwiseFilenameTemplate', placeholder: '{{title}} by {{author}} highlights' },
 					},
 					{
@@ -150,11 +181,7 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 								type: 'group',
 								heading: 'Note',
 								items: [
-									{
-										name: 'Note template',
-										desc: 'Whole note. Leave empty for the default.',
-										control: { type: 'textarea', key: 'readwiseNoteTemplate', placeholder: DEFAULT_NOTE_TEMPLATE, rows: 14 },
-									},
+									this.templateField('Note template', 'Whole note. Empty falls back to the default.', 'readwiseNoteTemplate', DEFAULT_NOTE_TEMPLATE, 18),
 									variableList(NOTE_VARIABLES),
 								],
 							},
@@ -162,11 +189,7 @@ export default class ZettelizerSettingTab extends PluginSettingTab {
 								type: 'group',
 								heading: 'Highlight',
 								items: [
-									{
-										name: 'Highlight template',
-										desc: 'Repeated for each highlight. Leave empty for the default.',
-										control: { type: 'textarea', key: 'readwiseHighlightTemplate', placeholder: DEFAULT_HIGHLIGHT_TEMPLATE, rows: 6 },
-									},
+									this.templateField('Highlight template', 'Repeated for each highlight. Empty falls back to the default.', 'readwiseHighlightTemplate', DEFAULT_HIGHLIGHT_TEMPLATE, 6),
 									variableList(HIGHLIGHT_VARIABLES),
 								],
 							},

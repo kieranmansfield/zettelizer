@@ -1,3 +1,5 @@
+import { DEFAULT_FILENAME_TEMPLATE, DEFAULT_HIGHLIGHT_TEMPLATE, DEFAULT_NOTE_TEMPLATE } from './readwise/render'
+
 export interface ZettelizerSettings {
 	readwiseFolder: string
 	zettelFolder: string
@@ -9,7 +11,7 @@ export interface ZettelizerSettings {
 	readwiseTokenSecret: string
 	skipExisting: boolean
 	syncOnStartup: boolean
-	/** Empty means the built-in default (see readwise/render.ts). */
+	/** Start as the built-in default so there is something to edit; emptied, they fall back to it again. */
 	readwiseNoteTemplate: string
 	readwiseHighlightTemplate: string
 	readwiseFilenameTemplate: string
@@ -27,10 +29,17 @@ export const DEFAULT_SETTINGS: ZettelizerSettings = {
 	readwiseTokenSecret: '',
 	skipExisting: true,
 	syncOnStartup: true,
-	readwiseNoteTemplate: '',
-	readwiseHighlightTemplate: '',
-	readwiseFilenameTemplate: '',
+	readwiseNoteTemplate: DEFAULT_NOTE_TEMPLATE,
+	readwiseHighlightTemplate: DEFAULT_HIGHLIGHT_TEMPLATE,
+	readwiseFilenameTemplate: DEFAULT_FILENAME_TEMPLATE,
 	readwisePrivateSources: true,
+}
+
+const TEMPLATE_KEYS = ['readwiseNoteTemplate', 'readwiseHighlightTemplate', 'readwiseFilenameTemplate'] as const
+
+/** Earlier versions saved empty templates; show the default in the editor instead of an empty box. */
+export function fillEmptyTemplates(settings: ZettelizerSettings): void {
+	for (const key of TEMPLATE_KEYS) settings[key] ||= DEFAULT_SETTINGS[key]
 }
 
 const LEGACY_SECRET_ID = 'zettelizer-readwise-token'
