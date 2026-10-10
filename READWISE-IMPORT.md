@@ -83,7 +83,7 @@ Body, one block per highlight (the zettelizer parser depends on the trailing blo
 
 ```markdown
 # Highlights
-> <mark>highlight text</mark> ^<highlight id>
+> ==highlight text== ^<highlight id>
 
 
 ---

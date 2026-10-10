@@ -31,7 +31,7 @@ id: {{id}}
 {{highlights}}
 `
 
-export const DEFAULT_HIGHLIGHT_TEMPLATE = `> <mark>{{text}}</mark>{{tags}} ^{{id}}{{noteBlock}}
+export const DEFAULT_HIGHLIGHT_TEMPLATE = `> =={{text}}=={{tags}} ^{{id}}{{noteBlock}}
 
 
 ---`

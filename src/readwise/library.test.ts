@@ -105,7 +105,7 @@ describe('readwise library', () => {
 		expect(fm).toContain('tags:\n  - stoicism\n  - to-read\ntitle:')
 		expect(fm).not.toContain('mental-health')
 		expect(fm).toContain('status: processed')
-		expect(md).toContain('<mark>first</mark> #mental-health #core-idea #_2024 ^1\n\n**Note:** my note\nline two\n.fav')
+		expect(md).toContain('==first== #mental-health #core-idea #_2024 ^1\n\n**Note:** my note\nline two\n.fav')
 		// the importer's own output still parses: tags land in `tags`, not in the text
 		const [first] = parseHighlightsFromContent(md)
 		expect(first).toMatchObject({ text: 'first', blockId: '1', tags: ['mental-health', 'core-idea', '_2024'] })
@@ -115,7 +115,7 @@ describe('readwise library', () => {
 		const t = setup({ routes: { 'GET /export/': () => ({ status: 200, json: { results: [EXPORT], nextPageCursor: null } }) } })
 		await t.lib.importDocument(DOC)
 		expect(Object.keys(t.files)).toEqual(['Readwise/My Book by A highlights.md'])
-		expect(t.files['Readwise/My Book by A highlights.md']).toContain('<mark>hello</mark> ^1')
+		expect(t.files['Readwise/My Book by A highlights.md']).toContain('==hello== ^1')
 		expect(t.opened).toEqual(['Readwise/My Book by A highlights.md'])
 	})
 
